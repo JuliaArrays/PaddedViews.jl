@@ -45,7 +45,7 @@ A = @inferred(PaddedViews.PaddedView(0.0, a, (0:4, -1:5)))
 
 a1 = reshape([1,2], 2, 1)
 a2 = [1.0,2.0]'
-a1p, a2p = @inferred(paddedviews(a1, a2))
+a1p, a2p = @inferred(paddedviews(0, a1, a2))
 @test a1p == [1 0; 2 0]
 @test a2p == [1.0 2.0; 0.0 0.0]
 @test eltype(a1p) == Int
@@ -53,7 +53,7 @@ a1p, a2p = @inferred(paddedviews(a1, a2))
 @test indices(a1p) === indices(a2p) === (Base.OneTo(2), Base.OneTo(2))
 
 a3 = OffsetArray([1.0,2.0]', (0,-1))
-a1p, a3p = @inferred(paddedviews(a1, a3))
+a1p, a3p = @inferred(paddedviews(0, a1, a3))
 @test a1p == OffsetArray([0 1; 0 2], 1:2, 0:1)
 @test a3p == OffsetArray([1.0 2.0; 0.0 0.0], 1:2, 0:1)
 @test eltype(a1p) == Int

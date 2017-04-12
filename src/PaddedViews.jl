@@ -5,6 +5,31 @@ using Base: OneTo, tail
 
 export PaddedView, paddedviews
 
+"""
+    datapadded = PaddedView(fillvalue, data, sz)
+    datapadded = PaddedView(fillvalue, data, indices)
+
+Create a padded version of the array `data`, where any elements within
+the span of `indices` not assigned in `data` will have value
+`fillvalue`.
+
+# Example
+
+```julia
+julia> a = reshape(1:9, 3, 3)
+3×3 Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}:
+ 1  4  7
+ 2  5  8
+ 3  6  9
+
+julia> PaddedView(-1, a, (4, 5))
+4×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}:
+  1   4   7  -1  -1
+  2   5   8  -1  -1
+  3   6   9  -1  -1
+ -1  -1  -1  -1  -1
+```
+"""
 immutable PaddedView{T,N,I,A} <: AbstractArray{T,N}
     fillvalue::T
     data::A
@@ -16,6 +41,7 @@ immutable PaddedView{T,N,I,A} <: AbstractArray{T,N}
         new{T,N,I,A}(fillvalue, data, indices)
     end
 end
+
 (::Type{PaddedView}){T,N}(fillvalue, data::AbstractArray{T,N}, indices) =
     PaddedView{T,N,typeof(indices),typeof(data)}(convert(T, fillvalue), data, indices)
 function (::Type{PaddedView}){T,N}(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}})
@@ -41,11 +67,40 @@ errmsg(A) = error("size not supported for arrays with indices $(indices(A)); see
     return A.fillvalue
 end
 
+"""
+    Aspad = paddedviews(fillvalue, A1, A2, ....)
+
+Pad the arrays `A1`, `A2`, ..., to a common size or set of indices,
+chosen as the span of indices enclosing all of the input arrays.
+
+# Example:
+```julia
+julia> a1 = reshape([1,2], 2, 1)
+2×1 Array{Int64,2}:
+ 1
+ 2
+
+julia> a2 = [1.0,2.0]'
+1×2 Array{Float64,2}:
+ 1.0  2.0
+
+julia> a1p, a2p = paddedviews(0, a1, a2);
+
+julia> a1p
+2×2 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Array{Int64,2}}:
+ 1  0
+ 2  0
+
+julia> a2p
+2×2 PaddedViews.PaddedView{Float64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Array{Float64,2}}:
+ 1.0  2.0
+ 0.0  0.0
+```
+"""
 function paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
     map(A->PaddedView(fillvalue, A, inds), As)
 end
-paddedviews(As::AbstractArray...) = paddedviews(0, As...)
 
 @inline outerinds(A::AbstractArray, Bs...) = _outerinds(indices(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
