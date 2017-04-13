@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/JuliaArrays/PaddedViews.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/PaddedViews.jl)
 
+[![Build status](https://ci.appveyor.com/api/projects/status/p4ci9hb4oe4tbro9/branch/master?svg=true)](https://ci.appveyor.com/project/timholy/paddedviews-jl/branch/master)
+
 [![codecov.io](http://codecov.io/github/JuliaArrays/PaddedViews.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaArrays/PaddedViews.jl?branch=master)
 
 ## Summary
