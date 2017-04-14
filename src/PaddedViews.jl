@@ -112,6 +112,11 @@ _outerinds(inds) = inds
 _outerinds{N}(inds1::NTuple{N,AbstractUnitRange}, inds2::NTuple{N,AbstractUnitRange}) =
     map((i1, i2) -> convert(UnitRange{Int}, padrange(i1, i2)), inds1, inds2)
 
+# This shouldn't be reached due to the `paddedviews(fillvalue)` method above,
+# but it's here in case anyone extends `paddedviews` for types other than AbstractArrays.
+# See https://github.com/JuliaImages/ImageCore.jl/pull/32#discussion_r111545756
+outerinds() = error("must supply at least one array with concrete indices")
+
 padrange(i1::OneTo, i2::OneTo) = OneTo(max(last(i1), last(i2)))
 padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)):max(last(i1), last(i2))
 

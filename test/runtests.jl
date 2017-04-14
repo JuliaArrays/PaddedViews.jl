@@ -65,6 +65,10 @@ end
     @test indices(a1p) === indices(a3p) === (1:2, 0:1)
 
     @test @inferred(paddedviews(3)) == nothing
+    @test_throws ErrorException PaddedViews.outerinds()
+    # But a zero-dimensional input should not trigger that error
+    a = reshape([5])
+    @test paddedviews(-1, a) == (a,)
 end
 
 nothing
