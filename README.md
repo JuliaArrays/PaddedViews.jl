@@ -8,11 +8,15 @@
 
 ## Summary
 
-PaddedViews provides a simple wrapper type, `PaddedView` to add
+PaddedViews provides a simple wrapper type, `PaddedView`, to add
 "virtual" padding to any array without copying data. Edge values not
 specified by the array are assigned a `fillvalue`.  Multiple arrays
 may be "promoted" to have common indices using the `paddedviews`
 function.
+
+`PaddedView` arrays are read-only, meaning that you cannot assign
+values to them. The original array may be extracted using `A =
+parent(P)`, where `P` is a `PaddedView`.
 
 ## Examples
 
