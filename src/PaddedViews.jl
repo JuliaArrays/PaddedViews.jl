@@ -101,6 +101,7 @@ function paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
     map(A->PaddedView(fillvalue, A, inds), As)
 end
+paddedviews(fillvalue) = nothing
 
 @inline outerinds(A::AbstractArray, Bs...) = _outerinds(indices(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
