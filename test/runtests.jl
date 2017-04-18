@@ -64,7 +64,7 @@ end
     @test eltype(a3p) == Float64
     @test indices(a1p) === indices(a3p) === (1:2, 0:1)
 
-    @test @inferred(paddedviews(3)) == nothing
+    @test @inferred(paddedviews(3)) == ()
     @test_throws ErrorException PaddedViews.outerinds()
     # But a zero-dimensional input should not trigger that error
     a = reshape([5])
