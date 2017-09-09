@@ -30,36 +30,36 @@ julia> PaddedView(-1, a, (4, 5))
  -1  -1  -1  -1  -1
 ```
 """
-immutable PaddedView{T,N,I,A} <: AbstractArray{T,N}
+struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
     fillvalue::T
     data::A
     indices::I
 
-    function (::Type{PaddedView{T,N,I,A}}){T,N,I,A}(fillvalue::T,
-                                                    data::AbstractArray{T,N},
-                                                    indices::NTuple{N,AbstractUnitRange})
+    function PaddedView{T,N,I,A}(fillvalue::T,
+                                 data::AbstractArray{T,N},
+                                 indices::NTuple{N,AbstractUnitRange}) where {T,N,I,A}
         new{T,N,I,A}(fillvalue, data, indices)
     end
 end
 
-(::Type{PaddedView}){T,N}(fillvalue, data::AbstractArray{T,N}, indices) =
+PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N} =
     PaddedView{T,N,typeof(indices),typeof(data)}(convert(T, fillvalue), data, indices)
-function (::Type{PaddedView}){T,N}(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}})
+function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
     inds = map(OneTo, sz)
     PaddedView{T,N,typeof(inds),typeof(data)}(convert(T, fillvalue), data, inds)
 end
 
 Base.indices(A::PaddedView) = A.indices
 @inline Base.indices(A::PaddedView, d::Integer) = d <= ndims(A) ? A.indices[d] : default_indices(A.indices)
-default_indices{N,I<:AbstractUnitRange}(::NTuple{N,I}) = convert(I, OneTo(1))
+default_indices(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1))
 default_indices(::Any) = OneTo(1)
 
 Base.size(A::PaddedView) = _size(A, indices(A))
-_size{N}(A, inds::NTuple{N,OneTo}) = map(length, inds)
+_size(A, inds::NTuple{N,OneTo}) where {N} = map(length, inds)
 _size(A, inds) = errmsg(A)
 errmsg(A) = error("size not supported for arrays with indices $(indices(A)); see http://docs.julialang.org/en/latest/devdocs/offset-arrays/")
 
-@inline function Base.getindex{T,N}(A::PaddedView{T,N}, i::Vararg{Int,N})
+@inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
     if Base.checkbounds(Bool, A.data, i...)
         return A.data[i...]
@@ -107,9 +107,9 @@ paddedviews(fillvalue) = ()
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
     _outerinds(_outerinds(inds, indices(A)), Bs...)
 _outerinds(inds) = inds
-@inline _outerinds{N,I<:AbstractUnitRange}(inds1::NTuple{N,I}, inds2::NTuple{N,I}) =
+@inline _outerinds(inds1::NTuple{N,I}, inds2::NTuple{N,I}) where {N,I<:AbstractUnitRange} =
     map((i1, i2) -> convert(I, padrange(i1, i2)), inds1, inds2)
-_outerinds{N}(inds1::NTuple{N,AbstractUnitRange}, inds2::NTuple{N,AbstractUnitRange}) =
+_outerinds(inds1::NTuple{N,AbstractUnitRange}, inds2::NTuple{N,AbstractUnitRange}) where {N} =
     map((i1, i2) -> convert(UnitRange{Int}, padrange(i1, i2)), inds1, inds2)
 
 # This shouldn't be reached due to the `paddedviews(fillvalue)` method above,
