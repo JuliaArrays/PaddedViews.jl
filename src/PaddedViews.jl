@@ -2,16 +2,24 @@ __precompile__(true)
 
 module PaddedViews
 using Base: OneTo, tail
+using OffsetArrays
 
 export PaddedView, paddedviews
 
 """
+    datapadded = PaddedView(fillvalue, data, padded_indices)
+    datapadded = PaddedView(fillvalue, data, padded_indices, data_indices)
     datapadded = PaddedView(fillvalue, data, sz)
-    datapadded = PaddedView(fillvalue, data, indices)
+    datapadded = PaddedView(fillvalue, data, sz, first_datum)
 
 Create a padded version of the array `data`, where any elements within
-the span of `indices` not assigned in `data` will have value
-`fillvalue`.
+the span of `padded_indices` not assigned in `data` will have value
+`fillvalue`. If a second set of indices `data_indices` is not supplied
+it is assumed the array `data` spans the indices from the first up until
+`size(data)`, otherwise `data` spans the specified `data_indices`. 
+Alternately, the padded array size `sz` can be specified along with the 
+location of the first element of `data`, `first_datum`. If `first_datum`
+is omitted, it is assumed to be the first element of the padded array.
 
 # Example
 
@@ -28,6 +36,22 @@ julia> PaddedView(-1, a, (4, 5))
   2   5   8  -1  -1
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
+
+ julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
+ PaddedViews.PaddedView{Int64,2,Tuple{UnitRange{Int64},UnitRange{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}} with indices 1:5×1:5:
+  -1  -1  -1  -1  -1
+  -1   1   4   7  -1
+  -1   2   5   8  -1
+  -1   3   6   9  -1
+  -1  -1  -1  -1  -1
+
+julia> PaddedView(-1, a, (5,5), (2,2))
+5×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}}:
+-1  -1  -1  -1  -1
+-1   1   4   7  -1
+-1   2   5   8  -1
+-1   3   6   9  -1
+-1  -1  -1  -1  -1
 ```
 """
 struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
@@ -47,6 +71,24 @@ PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N} =
 function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
     inds = map(OneTo, sz)
     PaddedView{T,N,typeof(inds),typeof(data)}(convert(T, fillvalue), data, inds)
+end
+
+function PaddedView(fillvalue, 
+                    data::AbstractArray{T,N}, 
+                    padded_inds::NTuple{N,AbstractUnitRange},
+                    data_inds::NTuple{N,AbstractUnitRange}) where {T,N} 
+    @assert all(map(last, data_inds) .<= map(last, padded_inds)) "incompatible indices for embedded array $data_inds and padded view $padded_inds"
+    off_data = OffsetArray(data, data_inds...)
+    return PaddedView(fillvalue, off_data, padded_inds)
+end
+
+function PaddedView(fillvalue, 
+                    data::AbstractArray{T,N}, 
+                    sz::NTuple{N,Integer},
+                    first_datum::NTuple{N,Integer}) where {T,N} 
+    padded_inds = map(OneTo, sz)
+    data_inds   = map(colon, first_datum, size(data) .+ first_datum .- 1)
+    return PaddedView(fillvalue, data, padded_inds, data_inds)
 end
 
 Base.indices(A::PaddedView) = A.indices
