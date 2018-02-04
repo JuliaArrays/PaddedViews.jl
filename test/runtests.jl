@@ -44,6 +44,14 @@ end
                             0 0 2 5 8 0 0;
                             0 0 3 6 9 0 0;
                             0 0 0 0 0 0 0], 0:4, -1:5)
+    
+    A = @inferred(PaddedView(0.0, a, (Base.OneTo(5), Base.OneTo(5)), (2:4, 2:4)))
+    @test A == [0 0 0 0 0;
+                0 1 4 7 0;
+                0 2 5 8 0;
+                0 3 6 9 0;
+                0 0 0 0 0]
+    @test A == @inferred(PaddedView(0.0, a, (5, 5), (2, 2)))
 end
 
 @testset "paddedviews" begin

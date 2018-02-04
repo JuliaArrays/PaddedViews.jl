@@ -35,6 +35,13 @@ julia> PaddedView(-1, a, (4, 5))   # -1 is the fill value, (4, 5) is the desired
   2   5   8  -1  -1
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
+
+julia> PaddedView(-1, a, (4,5), (2,2)) # (2, 2) is the location of the first element from a
+4×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}}:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
 ```
 
 For padding multiple arrays to have common indices:
