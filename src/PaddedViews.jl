@@ -3,7 +3,6 @@ __precompile__(true)
 module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
-using Compat
 
 export PaddedView, paddedviews
 
@@ -96,19 +95,19 @@ function PaddedView(fillvalue,
                     sz::NTuple{N,Integer},
                     first_datum::NTuple{N,Integer}) where {T,N}
     padded_inds = map(OneTo, sz)
-    data_inds   = map(colon, first_datum, size(data) .+ first_datum .- 1)
+    data_inds   = map(:, first_datum, size(data) .+ first_datum .- 1)
     return PaddedView(fillvalue, data, padded_inds, data_inds)
 end
 
-Compat.axes(A::PaddedView) = A.indices
-@inline Compat.axes(A::PaddedView, d::Integer) = d <= ndims(A) ? A.indices[d] : default_axes(A.indices)
+Base.axes(A::PaddedView) = A.indices
+@inline Base.axes(A::PaddedView, d::Integer) = d <= ndims(A) ? A.indices[d] : default_axes(A.indices)
 default_axes(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1))
 default_axes(::Any) = OneTo(1)
 
-Base.size(A::PaddedView) = _size(A, Compat.axes(A))
+Base.size(A::PaddedView) = _size(A, axes(A))
 _size(A, inds::NTuple{N,OneTo}) where {N} = map(length, inds)
 _size(A, inds) = errmsg(A)
-errmsg(A) = error("size not supported for arrays with axes $(Compat.axes(A)); see http://docs.julialang.org/en/latest/devdocs/offset-arrays/")
+errmsg(A) = error("size not supported for arrays with axes $(axes(A)); see http://docs.julialang.org/en/latest/devdocs/offset-arrays/")
 
 @inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
@@ -154,9 +153,9 @@ function paddedviews(fillvalue, As::AbstractArray...)
 end
 paddedviews(fillvalue) = ()
 
-@inline outerinds(A::AbstractArray, Bs...) = _outerinds(Compat.axes(A), Bs...)
+@inline outerinds(A::AbstractArray, Bs...) = _outerinds(axes(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
-    _outerinds(_outerinds(inds, Compat.axes(A)), Bs...)
+    _outerinds(_outerinds(inds, axes(A)), Bs...)
 _outerinds(inds) = inds
 @inline _outerinds(inds1::NTuple{N,I}, inds2::NTuple{N,I}) where {N,I<:AbstractUnitRange} =
     map((i1, i2) -> convert(I, padrange(i1, i2)), inds1, inds2)
