@@ -104,10 +104,7 @@ Base.axes(A::PaddedView) = A.indices
 default_axes(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1))
 default_axes(::Any) = OneTo(1)
 
-Base.size(A::PaddedView) = _size(A, axes(A))
-_size(A, inds::NTuple{N,OneTo}) where {N} = map(length, inds)
-_size(A, inds) = errmsg(A)
-errmsg(A) = error("size not supported for arrays with axes $(axes(A)); see http://docs.julialang.org/en/latest/devdocs/offset-arrays/")
+Base.size(A::PaddedView) = map(length, axes(A))
 
 @inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
