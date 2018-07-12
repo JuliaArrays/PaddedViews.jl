@@ -36,7 +36,7 @@ end
     A = @inferred(PaddedView(0.0, a, (0:4, -1:5)))
     @test eltype(A) == Int
     @test ndims(A) == 2
-    @test_throws ErrorException size(A)
+    @test size(A) == (5, 7)
     @test @inferred(axes(A)) === (0:4, -1:5)
     @test @inferred(axes(A, 3)) === 1:1
     @test A == OffsetArray([0 0 0 0 0 0 0;
