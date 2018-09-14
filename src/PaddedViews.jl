@@ -85,7 +85,7 @@ function PaddedView(fillvalue,
                     data::AbstractArray{T,N},
                     padded_inds::NTuple{N,AbstractUnitRange},
                     data_inds::NTuple{N,AbstractUnitRange}) where {T,N}
-    @assert all(map(last, data_inds) .<= map(last, padded_inds)) "incompatible axes for embedded array $data_inds and padded view $padded_inds"
+
     off_data = OffsetArray(data, data_inds...)
     return PaddedView(fillvalue, off_data, padded_inds)
 end
