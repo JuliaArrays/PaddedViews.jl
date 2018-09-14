@@ -52,6 +52,8 @@ end
                 0 3 6 9 0;
                 0 0 0 0 0]
     @test A == @inferred(PaddedView(0.0, a, (5, 5), (2, 2)))
+
+    @test PaddedView(0, ones(4), (3,), (1,)) == PaddedView(0, ones(4), (3,))
 end
 
 @testset "paddedviews" begin
