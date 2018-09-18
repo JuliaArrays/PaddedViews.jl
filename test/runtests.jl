@@ -54,6 +54,24 @@ end
     @test A == @inferred(PaddedView(0.0, a, (5, 5), (2, 2)))
 
     @test PaddedView(0, ones(4), (3,), (1,)) == PaddedView(0, ones(4), (3,))
+    let a = reshape(1:6, 2, 3) # [1 3 5; 2 4 6]
+        @test PaddedView(-1, a, (2, 2))          == [1 3
+                                                     2 4]
+
+        @test PaddedView(-1, a, (1, 4))          == [1 3 5 -1 ]
+
+        @test PaddedView(-1, a, (2, 4), (1, 1))  == [1 3 5 -1
+                                                     2 4 6 -1]
+
+        @test PaddedView(-1, a, (2, 4), (1, 2))  == [-1 1 3 5
+                                                     -1 2 4 6]
+
+        @test PaddedView(-1, a, (2, 3), (0, 2))  == [-1  2  4
+                                                     -1 -1 -1]                                                      
+
+        @test PaddedView(-1, a, (1, 4), (1, -1)) == [5 -1 -1 -1]
+                                                      
+        end
 end
 
 @testset "paddedviews" begin
