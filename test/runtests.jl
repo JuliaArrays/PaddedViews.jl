@@ -70,8 +70,17 @@ end
                                                      -1 -1 -1]                                                      
 
         @test PaddedView(-1, a, (1, 4), (1, -1)) == [5 -1 -1 -1]
-                                                      
-        end
+              
+        # Create an OffsetArray with axes (0:1, 2:4)
+        oa = OffsetArray(a, -1, 1)
+        # Make a PaddedView of its elements (1:3, 1:2) (i.e pv[1, 1] == oa[1, 1] == "a[2, 0]" == -1)
+        pv = PaddedView(-1, oa, (3, 2))
+        @test pv[1:3, 1:2] == [-1 2; -1 -1; -1 -1]
+        # Put oa[1, 1] in pv[2, 0] and make a PaddedView of the resulting (1:3, 1:2) elements
+            # i.e. same as putting oa[0,2] in pv[1, 1]
+        pv = PaddedView(-1, oa, (3, 2), (2, 0))
+        @test pv[1:3, 1:2] == [1 3; 2 4; -1 -1] 
+    end
 end
 
 @testset "paddedviews" begin
