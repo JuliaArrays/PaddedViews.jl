@@ -1,5 +1,3 @@
-__precompile__(true)
-
 module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
@@ -7,38 +5,57 @@ using OffsetArrays
 export PaddedView, paddedviews
 
 """
-    datapadded = PaddedView(fillvalue, data, padded_indices)
-    datapadded = PaddedView(fillvalue, data, padded_indices, data_indices)
+    datapadded = PaddedView(fillvalue, data, padded_axes)
+    datapadded = PaddedView(fillvalue, data, padded_axes, data_axes)
     datapadded = PaddedView(fillvalue, data, sz)
     datapadded = PaddedView(fillvalue, data, sz, first_datum)
 
 Create a padded version of the array `data`, where any elements within
-the span of `padded_indices` not assigned in `data` will have value
-`fillvalue`. If a second set of indices `data_indices` is not supplied
-it is assumed the array `data` spans the indices from the first up until
-`size(data)`, otherwise `data` spans the specified `data_indices`.
-Alternately, the padded array size `sz` can be specified along with the
-location of the first element of `data`, `first_datum`. If `first_datum`
-is omitted, it is assumed to be the first element of the padded array.
+the span of `padded_axes` not assigned in `data` will have value
+`fillvalue`.
+
+Supply `data_axes` to specify an alterate set of axes for `data`, effectively
+relocating `data` to a different set of indices.
+This is shorthand for
+
+    offsetdata = OffsetArray(data, data_axes)
+    datapadded = PaddedView(fillvalue, offsetdata, padded_axes)
+
+using the [OffsetArrays](https://github.com/JuliaArrays/OffsetArrays.jl) package.
+
+Alternately, the padded array size `sz` can be specified, in which case `datapadded`
+starts indexing at 1.
+One may optionally specify the location of the `[1, 1, ...]` element of `data` with
+`first_datum`.
+Specifically, `datapadded[first_datum...]` corresponds to `data[1, 1, ...]`.
+`first_datum` defaults to all-1s.
 
 # Example
 
 ```julia
-julia> a = reshape(1:9, 3, 3)
-3×3 Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}:
+julia> a = collect(reshape(1:9, 3, 3))
+3×3 Array{Int64,2}:
  1  4  7
  2  5  8
  3  6  9
 
 julia> PaddedView(-1, a, (4, 5))
-4×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}:
+4×5 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(4), Base.OneTo(5))) with eltype Int64:
   1   4   7  -1  -1
   2   5   8  -1  -1
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
 
  julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
- PaddedViews.PaddedView{Int64,2,Tuple{UnitRange{Int64},UnitRange{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}} with indices 1:5×1:5:
+ 5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (1:5, 1:5)) with eltype Int64 with indices 1:5×1:5:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
+ -1  -1  -1  -1  -1
+
+ julia> PaddedView(-1, a, (0:4, 0:4))
+ 5×5 PaddedView(-1, ::Array{Int64,2}, (0:4, 0:4)) with eltype Int64 with indices 0:4×0:4:
   -1  -1  -1  -1  -1
   -1   1   4   7  -1
   -1   2   5   8  -1
@@ -46,12 +63,12 @@ julia> PaddedView(-1, a, (4, 5))
   -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (5,5), (2,2))
-5×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}}:
--1  -1  -1  -1  -1
--1   1   4   7  -1
--1   2   5   8  -1
--1   3   6   9  -1
--1  -1  -1  -1  -1
+5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (Base.OneTo(5), Base.OneTo(5))) with eltype Int64:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
+ -1  -1  -1  -1  -1
 ```
 """
 struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
@@ -68,6 +85,7 @@ end
 
 PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N} =
     PaddedView{T,N,typeof(indices),typeof(data)}(convert(T, fillvalue), data, indices)
+
 function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
     inds = map(OneTo, sz)
     PaddedView{T,N,typeof(inds),typeof(data)}(convert(T, fillvalue), data, inds)
@@ -85,7 +103,6 @@ function PaddedView(fillvalue,
                     data::AbstractArray{T,N},
                     padded_inds::NTuple{N,AbstractUnitRange},
                     data_inds::NTuple{N,AbstractUnitRange}) where {T,N}
-
     off_data = OffsetArray(data, data_inds...)
     return PaddedView(fillvalue, off_data, padded_inds)
 end
@@ -95,7 +112,7 @@ function PaddedView(fillvalue,
                     sz::NTuple{N,Integer},
                     first_datum::NTuple{N,Integer}) where {T,N}
     padded_inds = map(OneTo, sz)
-    data_inds   = map(:, first_datum, size(data) .+ first_datum .- 1)
+    data_inds   = map((ax, o)->ax.+o, axes(data), first_datum .- 1)
     return PaddedView(fillvalue, data, padded_inds, data_inds)
 end
 
@@ -105,6 +122,8 @@ default_axes(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1)
 default_axes(::Any) = OneTo(1)
 
 Base.size(A::PaddedView) = map(length, axes(A))
+
+Base.parent(A::PaddedView) = A.data
 
 @inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
@@ -166,5 +185,13 @@ outerinds() = error("must supply at least one array with concrete axes")
 
 padrange(i1::OneTo, i2::OneTo) = OneTo(max(last(i1), last(i2)))
 padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)):max(last(i1), last(i2))
+
+function Base.showarg(io::IO, A::PaddedView, toplevel)
+    print(io, "PaddedView(", A.fillvalue, ", ")
+    Base.showarg(io, parent(A), false)
+    print(io, ", (", join(A.indices, ", "))
+    print(io, ndims(A) == 1 ? ",))" : "))")
+    toplevel && print(io, " with eltype ", eltype(A))
+end
 
 end # module
