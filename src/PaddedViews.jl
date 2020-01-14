@@ -7,19 +7,29 @@ using OffsetArrays
 export PaddedView, paddedviews
 
 """
-    datapadded = PaddedView(fillvalue, data, padded_indices)
-    datapadded = PaddedView(fillvalue, data, padded_indices, data_indices)
+    datapadded = PaddedView(fillvalue, data, padded_axes)
+    datapadded = PaddedView(fillvalue, data, padded_axes, data_axes)
     datapadded = PaddedView(fillvalue, data, sz)
     datapadded = PaddedView(fillvalue, data, sz, first_datum)
 
 Create a padded version of the array `data`, where any elements within
-the span of `padded_indices` not assigned in `data` will have value
-`fillvalue`. If a second set of indices `data_indices` is not supplied
-it is assumed the array `data` spans the indices from the first up until
-`size(data)`, otherwise `data` spans the specified `data_indices`.
-Alternately, the padded array size `sz` can be specified along with the
-location of the first element of `data`, `first_datum`. If `first_datum`
-is omitted, it is assumed to be the first element of the padded array.
+the span of `padded_axes` not assigned in `data` will have value
+`fillvalue`.
+
+Supply `data_axes` to specify an alterate set of axes for `data`, effectively
+relocating `data` to a different set of indices.
+This is shorthand for
+
+    offsetdata = OffsetArray(data, data_axes)
+    datapadded = PaddedView(fillvalue, offsetdata, padded_axes)
+
+using the [OffsetArrays](https://github.com/JuliaArrays/OffsetArrays.jl) package.
+
+Alternately, the padded array size `sz` can be specified, in which case `datapadded`
+starts indexing at 1.
+One may optionally specify the location of the first used element of `data`, `first_datum`.
+Specifically, `datapadded[first_datum...]` corresponds to `data[1, 1, ...]`.
+`first_datum` defaults to all-1s.
 
 # Example
 
@@ -68,6 +78,7 @@ end
 
 PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N} =
     PaddedView{T,N,typeof(indices),typeof(data)}(convert(T, fillvalue), data, indices)
+
 function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
     inds = map(OneTo, sz)
     PaddedView{T,N,typeof(inds),typeof(data)}(convert(T, fillvalue), data, inds)
@@ -85,7 +96,6 @@ function PaddedView(fillvalue,
                     data::AbstractArray{T,N},
                     padded_inds::NTuple{N,AbstractUnitRange},
                     data_inds::NTuple{N,AbstractUnitRange}) where {T,N}
-
     off_data = OffsetArray(data, data_inds...)
     return PaddedView(fillvalue, off_data, padded_inds)
 end
@@ -95,7 +105,7 @@ function PaddedView(fillvalue,
                     sz::NTuple{N,Integer},
                     first_datum::NTuple{N,Integer}) where {T,N}
     padded_inds = map(OneTo, sz)
-    data_inds   = map(:, first_datum, size(data) .+ first_datum .- 1)
+    data_inds   = map((ax, o)->ax.+o, axes(data), first_datum .- 1)
     return PaddedView(fillvalue, data, padded_inds, data_inds)
 end
 

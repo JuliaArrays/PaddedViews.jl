@@ -52,8 +52,11 @@ end
                 0 3 6 9 0;
                 0 0 0 0 0]
     @test A == @inferred(PaddedView(0.0, a, (5, 5), (2, 2)))
+    B = @inferred(PaddedView(0.0, OffsetArray(a, (2:4, 2:4)), (Base.OneTo(5), Base.OneTo(5))))
+    @test B == A
 
     @test PaddedView(0, ones(4), (3,), (1,)) == PaddedView(0, ones(4), (3,))
+
     let a = reshape(1:6, 2, 3) # [1 3 5; 2 4 6]
         @test @inferred(PaddedView(-1, a, (2, 2))) == [1 3
                                                        2 4]
@@ -67,19 +70,20 @@ end
                                                                 -1 2 4 6]
 
         @test @inferred(PaddedView(-1, a, (2, 3), (0, 2)))  == [-1  2  4
-                                                                -1 -1 -1]                                                      
+                                                                -1 -1 -1]
 
         @test @inferred(PaddedView(-1, a, (1, 4), (1, -1))) == [5 -1 -1 -1]
-              
+
         # Create an OffsetArray with axes (0:1, 2:4)
         oa = OffsetArray(a, -1, 1)
         # Make a PaddedView of its elements (1:3, 1:2) (i.e pv[1, 1] == oa[1, 1] == "a[2, 0]" == -1)
         pv = @inferred PaddedView(-1, oa, (3, 2))
+        @test axes(pv) === (Base.OneTo(3), Base.OneTo(2))
         @test pv[1:3, 1:2] == [-1 2; -1 -1; -1 -1]
         # Put oa[1, 1] in pv[2, 0] and make a PaddedView of the resulting (1:3, 1:2) elements
             # i.e. same as putting oa[0,2] in pv[1, 1]
         pv = @inferred PaddedView(-1, oa, (3, 2), (2, 0))
-        @test pv[1:3, 1:2] == [1 3; 2 4; -1 -1] 
+        @test pv[1:3, 1:2] == [1 3; 2 4; -1 -1]
     end
 end
 
