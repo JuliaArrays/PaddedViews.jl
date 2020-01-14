@@ -1,5 +1,3 @@
-__precompile__(true)
-
 module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
@@ -27,28 +25,37 @@ using the [OffsetArrays](https://github.com/JuliaArrays/OffsetArrays.jl) package
 
 Alternately, the padded array size `sz` can be specified, in which case `datapadded`
 starts indexing at 1.
-One may optionally specify the location of the first used element of `data`, `first_datum`.
+One may optionally specify the location of the `[1, 1, ...]` element of `data` with
+`first_datum`.
 Specifically, `datapadded[first_datum...]` corresponds to `data[1, 1, ...]`.
 `first_datum` defaults to all-1s.
 
 # Example
 
 ```julia
-julia> a = reshape(1:9, 3, 3)
-3×3 Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}:
+julia> a = collect(reshape(1:9, 3, 3))
+3×3 Array{Int64,2}:
  1  4  7
  2  5  8
  3  6  9
 
 julia> PaddedView(-1, a, (4, 5))
-4×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}:
+4×5 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(4), Base.OneTo(5))) with eltype Int64:
   1   4   7  -1  -1
   2   5   8  -1  -1
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
 
  julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
- PaddedViews.PaddedView{Int64,2,Tuple{UnitRange{Int64},UnitRange{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}} with indices 1:5×1:5:
+ 5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (1:5, 1:5)) with eltype Int64 with indices 1:5×1:5:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
+ -1  -1  -1  -1  -1
+
+ julia> PaddedView(-1, a, (0:4, 0:4))
+ 5×5 PaddedView(-1, ::Array{Int64,2}, (0:4, 0:4)) with eltype Int64 with indices 0:4×0:4:
   -1  -1  -1  -1  -1
   -1   1   4   7  -1
   -1   2   5   8  -1
@@ -56,12 +63,12 @@ julia> PaddedView(-1, a, (4, 5))
   -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (5,5), (2,2))
-5×5 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},OffsetArrays.OffsetArray{Int64,2,Base.ReshapedArray{Int64,2,UnitRange{Int64},Tuple{}}}}:
--1  -1  -1  -1  -1
--1   1   4   7  -1
--1   2   5   8  -1
--1   3   6   9  -1
--1  -1  -1  -1  -1
+5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (Base.OneTo(5), Base.OneTo(5))) with eltype Int64:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
+ -1  -1  -1  -1  -1
 ```
 """
 struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
@@ -115,6 +122,8 @@ default_axes(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1)
 default_axes(::Any) = OneTo(1)
 
 Base.size(A::PaddedView) = map(length, axes(A))
+
+Base.parent(A::PaddedView) = A.data
 
 @inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
@@ -176,5 +185,13 @@ outerinds() = error("must supply at least one array with concrete axes")
 
 padrange(i1::OneTo, i2::OneTo) = OneTo(max(last(i1), last(i2)))
 padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)):max(last(i1), last(i2))
+
+function Base.showarg(io::IO, A::PaddedView, toplevel)
+    print(io, "PaddedView(", A.fillvalue, ", ")
+    Base.showarg(io, parent(A), false)
+    print(io, ", (", join(A.indices, ", "))
+    print(io, ndims(A) == 1 ? ",))" : "))")
+    toplevel && print(io, " with eltype ", eltype(A))
+end
 
 end # module
