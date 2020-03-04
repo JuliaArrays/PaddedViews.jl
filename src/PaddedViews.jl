@@ -249,14 +249,14 @@ julia> a1p[CartesianIndices(a1)]
  ```
 """
 function cpaddedviews(fillvalue, As::AbstractArray...)
-    N = ndims(As[1])
-    # ~10x than paddedviews :disappointed:
-    out_sz = tuple(mapreduce(size, (x,y)->maximum.(zip(x, y)), As)...)::NTuple{N}
-    map(A->PaddedView(fillvalue, A, _cpad_offset(A, out_sz)), As)
+    out_sz = length.(outerinds(As...))
+    map(A->PaddedView(fillvalue, A, _cpad_inds(A, out_sz)), As)
 end
 cpaddedviews(fillvalue) = ()
 
-function _cpad_offset(A::AbstractArray, sz)
+
+
+function _cpad_inds(A::AbstractArray, sz)
     map(axes(A), sz) do ax, l
         pad_sz = l - length(ax)
         offset = pad_sz ÷ 2
