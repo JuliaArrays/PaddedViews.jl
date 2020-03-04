@@ -2,7 +2,7 @@ module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
 
-export PaddedView, paddedviews
+export PaddedView, paddedviews, cpaddedviews
 
 """
     datapadded = PaddedView(fillvalue, data, padded_axes)
@@ -139,28 +139,44 @@ end
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes,
 chosen as the span of axes enclosing all of the input arrays.
 
+The padding is applied to one direction. For example, values are filled to bottom-right part
+of the new array in two-dimensional case. Use [`cpaddedviews`](@ref) if _both_ directions
+need to be padded.
+
+The axes of each array `A` will be perserved in the padded result `Ap`, which means
+`Ap[CartesianIndices(A)] == A` holds true.
+
 # Example:
-```julia
-julia> a1 = reshape([1,2], 2, 1)
-2×1 Array{Int64,2}:
+```jldoctest
+julia> a1 = reshape([1, 2, 3], 3, 1)
+3×1 Array{Int64,2}:
  1
  2
+ 3
 
-julia> a2 = [1.0,2.0]'
-1×2 Array{Float64,2}:
- 1.0  2.0
+julia> a2 = [4 5 6]
+1×3 Array{Int64,2}:
+ 4  5  6
 
-julia> a1p, a2p = paddedviews(0, a1, a2);
+julia> a1p, a2p = paddedviews(-1, a1, a2);
 
 julia> a1p
-2×2 PaddedViews.PaddedView{Int64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Array{Int64,2}}:
- 1  0
- 2  0
+3×3 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+ 1  -1  -1
+ 2  -1  -1
+ 3  -1  -1
 
 julia> a2p
-2×2 PaddedViews.PaddedView{Float64,2,Tuple{Base.OneTo{Int64},Base.OneTo{Int64}},Array{Float64,2}}:
- 1.0  2.0
- 0.0  0.0
+3×3 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+  4   5   6
+ -1  -1  -1
+ -1  -1  -1
+
+julia> a1p[CartesianIndices(a1)]
+3×1 Array{Int64,2}:
+ 1
+ 2
+ 3
 ```
 """
 function paddedviews(fillvalue, As::AbstractArray...)
@@ -185,6 +201,69 @@ outerinds() = error("must supply at least one array with concrete axes")
 
 padrange(i1::OneTo, i2::OneTo) = OneTo(max(last(i1), last(i2)))
 padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)):max(last(i1), last(i2))
+
+
+"""
+    Aspad = cpaddedviews(fillvalue, A1, A2, ....)
+
+Pad the arrays `A1`, `A2`, ..., to a common size or set of axes, chosen as the span of axes
+enclosing all of the input arrays.
+
+The padding is applied to both directions, which means original array located at the center
+the padded result. Use [`paddedviews`](@ref) if only one direction need to be padded.
+
+The axes of each array `A` will be perserved in the padded result `Ap`, which means
+`Ap[CartesianIndices(A)] == A` holds true.
+
+
+```jldoctest
+julia> a1 = reshape([1, 2, 3], 3, 1)
+3×1 Array{Int64,2}:
+ 1
+ 2
+ 3
+
+julia> a2 = [4 5 6]
+1×3 Array{Int64,2}:
+ 4  5  6
+
+julia> a1p, a2p = cpaddedviews(-1, a1, a2);
+
+julia> a1p
+3×3 PaddedView(-1, ::Array{Int64,2}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
+ -1  1  -1
+ -1  2  -1
+ -1  3  -1
+
+julia> a2p
+3×3 PaddedView(-1, ::Array{Int64,2}, (0:2, 1:3)) with eltype Int64 with indices 0:2×1:3:
+ -1  -1  -1
+  4   5   6
+ -1  -1  -1
+
+julia> a1p[CartesianIndices(a1)]
+3×1 Array{Int64,2}:
+ 1
+ 2
+ 3
+ ```
+"""
+function cpaddedviews(fillvalue, As::AbstractArray...)
+    N = ndims(As[1])
+    # ~10x than paddedviews :disappointed:
+    out_sz = tuple(mapreduce(size, (x,y)->maximum.(zip(x, y)), As)...)::NTuple{N}
+    map(A->PaddedView(fillvalue, A, _cpad_offset(A, out_sz)), As)
+end
+cpaddedviews(fillvalue) = ()
+
+function _cpad_offset(A::AbstractArray, sz)
+    map(axes(A), sz) do ax, l
+        pad_sz = l - length(ax)
+        offset = pad_sz ÷ 2
+        first(ax)-offset:last(ax)+pad_sz-offset
+    end
+end
+
 
 function Base.showarg(io::IO, A::PaddedView, toplevel)
     print(io, "PaddedView(", A.fillvalue, ", ")
