@@ -143,8 +143,8 @@ The padding is applied to one direction. For example, values are filled to botto
 of the new array in two-dimensional case. Use [`cpaddedviews`](@ref) if _both_ directions
 need to be padded.
 
-The axes of each array `A` will be perserved in the padded result `Ap`, which means
-`Ap[CartesianIndices(A)] == A` holds true.
+The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
+that `Ap[CartesianIndices(A)] == A`.
 
 # Example:
 ```jldoctest
@@ -212,9 +212,8 @@ enclosing all of the input arrays.
 The padding is applied to both directions, which means original array located at the center
 the padded result. Use [`paddedviews`](@ref) if only one direction need to be padded.
 
-The axes of each array `A` will be perserved in the padded result `Ap`, which means
-`Ap[CartesianIndices(A)] == A` holds true.
-
+The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
+that `Ap[CartesianIndices(A)] == A`.
 
 ```jldoctest
 julia> a1 = reshape([1, 2, 3], 3, 1)
