@@ -117,6 +117,18 @@ end
 end
 
 @testset "cpaddedviews" begin
+    # even case
+    a1 = reshape([1,2], 2, 1)
+    a2 = [1.0,2.0]'
+    a1p, a2p = @inferred(cpaddedviews(0, a1, a2))
+    @test a1p == [1 0; 2 0]
+    @test a1p[CartesianIndices(a1)] == a1
+    @test a2p == [1.0 2.0; 0.0 0.0]
+    @test a2p[CartesianIndices(a2)] == a2
+    @test eltype(a1p) == Int
+    @test eltype(a2p) == Float64
+    @test axes(a1p) === axes(a2p) === (1:2, 1:2)
+
     a1 = reshape([1,2,3], 3, 1)
     a2 = [1.0,2.0,3.0]'
     a1p, a2p = @inferred(cpaddedviews(0, a1, a2))

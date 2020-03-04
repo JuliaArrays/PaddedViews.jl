@@ -249,16 +249,14 @@ julia> a1p[CartesianIndices(a1)]
  ```
 """
 function cpaddedviews(fillvalue, As::AbstractArray...)
-    out_sz = length.(outerinds(As...))
-    map(A->PaddedView(fillvalue, A, _cpad_inds(A, out_sz)), As)
+    inds = outerinds(As...)
+    map((A, A_axes)->PaddedView(fillvalue, A, _cpad_inds(A_axes, inds)), As, axes.(As))
 end
 cpaddedviews(fillvalue) = ()
 
-
-
-function _cpad_inds(A::AbstractArray, sz)
-    map(axes(A), sz) do ax, l
-        pad_sz = l - length(ax)
+function _cpad_inds(A_axes, inds)
+    map(A_axes, inds) do ax, i
+        pad_sz = length(i) - length(ax)
         offset = pad_sz ÷ 2
         first(ax)-offset:last(ax)+pad_sz-offset
     end
