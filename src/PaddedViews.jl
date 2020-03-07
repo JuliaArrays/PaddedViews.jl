@@ -75,20 +75,17 @@ struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
     fillvalue::T
     data::A
     indices::I
-
-    function PaddedView{T,N,I,A}(fillvalue::T,
-                                 data::AbstractArray{T,N},
-                                 indices::NTuple{N,AbstractUnitRange}) where {T,N,I,A}
-        new{T,N,I,A}(fillvalue, data, indices)
-    end
 end
 
-PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N} =
-    PaddedView{T,N,typeof(indices),typeof(data)}(convert(T, fillvalue), data, indices)
+function PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N}
+    _T = fillvalue isa Union{Missing, Nothing} ? Union{typeof(fillvalue), T} : T
+    PaddedView{_T,N,typeof(indices),typeof(data)}(convert(_T, fillvalue), data, indices)
+end
 
 function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
     inds = map(OneTo, sz)
-    PaddedView{T,N,typeof(inds),typeof(data)}(convert(T, fillvalue), data, inds)
+    _T = fillvalue isa Union{Missing, Nothing} ? Union{typeof(fillvalue), T} : T
+    PaddedView{_T,N,typeof(inds),typeof(data)}(convert(_T, fillvalue), data, inds)
 end
 
 # This method eliminates an ambiguity between the two below it
