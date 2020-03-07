@@ -92,7 +92,9 @@ end
     a2 = [1.0,2.0]'
     a1p, a2p = @inferred(paddedviews(0, a1, a2))
     @test a1p == [1 0; 2 0]
+    @test a1p[CartesianIndices(a1)] == a1
     @test a2p == [1.0 2.0; 0.0 0.0]
+    @test a2p[CartesianIndices(a2)] == a2
     @test eltype(a1p) == Int
     @test eltype(a2p) == Float64
     @test axes(a1p) === axes(a2p) === (Base.OneTo(2), Base.OneTo(2))
@@ -100,7 +102,9 @@ end
     a3 = OffsetArray([1.0,2.0]', (0,-1))
     a1p, a3p = @inferred(paddedviews(0, a1, a3))
     @test a1p == OffsetArray([0 1; 0 2], 1:2, 0:1)
+    @test a1p[CartesianIndices(a1)] == a1
     @test a3p == OffsetArray([1.0 2.0; 0.0 0.0], 1:2, 0:1)
+    @test a3p[CartesianIndices(a3)] == a3
     @test eltype(a1p) == Int
     @test eltype(a3p) == Float64
     @test axes(a1p) === axes(a3p) === (1:2, 0:1)
@@ -110,6 +114,47 @@ end
     # But a zero-dimensional input should not trigger that error
     a = reshape([5])
     @test paddedviews(-1, a) == (a,)
+end
+
+@testset "sym_paddedviews" begin
+    # even case
+    a1 = reshape([1,2], 2, 1)
+    a2 = [1.0,2.0]'
+    a1p, a2p = @inferred(sym_paddedviews(0, a1, a2))
+    @test a1p == [1 0; 2 0]
+    @test a1p[CartesianIndices(a1)] == a1
+    @test a2p == [1.0 2.0; 0.0 0.0]
+    @test a2p[CartesianIndices(a2)] == a2
+    @test eltype(a1p) == Int
+    @test eltype(a2p) == Float64
+    @test axes(a1p) === axes(a2p) === (1:2, 1:2)
+
+    a1 = reshape([1,2,3], 3, 1)
+    a2 = [1.0,2.0,3.0]'
+    a1p, a2p = @inferred(sym_paddedviews(0, a1, a2))
+
+    @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
+    @test a1p[CartesianIndices(a1)] == a1
+    @test a2p == OffsetArray([0.0 0.0 0.0; 1.0 2.0 3.0; 0.0 0.0 0.0], (0:2, 1:3))
+    @test a2p[CartesianIndices(a2)] == a2
+    @test eltype(a1p) == Int
+    @test eltype(a2p) == Float64
+    @test axes(a1p) === (1:3, 0:2)
+    @test axes(a2p) === (0:2, 1:3)
+
+    a3 = OffsetArray([1.0,2.0,3.0]', (0,-1))
+    a1p, a3p = @inferred(sym_paddedviews(0, a1, a3))
+
+    @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], 1:3, 0:2)
+    @test a1p[CartesianIndices(a1)] == a1
+    @test a3p == OffsetArray([0.0 0.0 0.0; 1.0 2.0 3.0; 0.0 0.0 0.0], 0:2, 0:2)
+    @test a3p[CartesianIndices(a3)] == a3
+    @test eltype(a1p) == Int
+    @test eltype(a3p) == Float64
+    @test axes(a1p) == (1:3, 0:2)
+    @test axes(a3p) == (0:2, 0:2)
+
+    @test @inferred(sym_paddedviews(3)) == ()
 end
 
 @testset "showarg" begin

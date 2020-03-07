@@ -67,24 +67,55 @@ julia> PaddedView(-1, a, (5,5), (2,2))
 For padding multiple arrays to have common indices:
 
 ```julia
-julia> a1 = reshape([1,2], 2, 1)
-2×1 Array{Int64,2}:
+julia> a1 = reshape([1, 2, 3], 3, 1)
+3×1 Array{Int64,2}:
  1
  2
+ 3
 
-julia> a2 = [1.0,2.0]'
-1×2 LinearAlgebra.Adjoint{Float64,Array{Float64,1}}:
- 1.0  2.0
+julia> a2 = [4 5 6]
+1×3 Array{Int64,2}:
+ 4  5  6
 
-julia> a1p, a2p = paddedviews(0, a1, a2);   # 0 is the fill value
+julia> a1p, a2p = paddedviews(-1, a1, a2);
 
 julia> a1p
-2×2 PaddedView(0, ::Array{Int64,2}, (Base.OneTo(2), Base.OneTo(2))) with eltype Int64:
- 1  0
- 2  0
+3×3 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+ 1  -1  -1
+ 2  -1  -1
+ 3  -1  -1
 
 julia> a2p
-2×2 PaddedView(0.0, ::LinearAlgebra.Adjoint{Float64,Array{Float64,1}}, (Base.OneTo(2), Base.OneTo(2))) with eltype Float64:
- 1.0  2.0
- 0.0  0.0
+3×3 PaddedView(-1, ::Array{Int64,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+  4   5   6
+ -1  -1  -1
+ -1  -1  -1
+```
+
+If you want original arrays in the center of padded results:
+
+```julia
+julia> a1 = reshape([1, 2, 3], 3, 1)
+3×1 Array{Int64,2}:
+ 1
+ 2
+ 3
+
+julia> a2 = [4 5 6]
+1×3 Array{Int64,2}:
+ 4  5  6
+
+julia> a1p, a2p = sym_paddedviews(-1, a1, a2);
+
+julia> a1p
+3×3 PaddedView(-1, ::Array{Int64,2}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
+ -1  1  -1
+ -1  2  -1
+ -1  3  -1
+
+julia> a2p
+3×3 PaddedView(-1, ::Array{Int64,2}, (0:2, 1:3)) with eltype Int64 with indices 0:2×1:3:
+ -1  -1  -1
+  4   5   6
+ -1  -1  -1
 ```
