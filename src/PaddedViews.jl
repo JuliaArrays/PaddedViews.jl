@@ -2,7 +2,7 @@ module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
 
-export PaddedView, paddedviews, cpaddedviews
+export PaddedView, paddedviews, sym_paddedviews
 
 """
     datapadded = PaddedView(fillvalue, data, padded_axes)
@@ -140,7 +140,7 @@ Pad the arrays `A1`, `A2`, ..., to a common size or set of axes,
 chosen as the span of axes enclosing all of the input arrays.
 
 The padding is applied to one direction. For example, values are filled to bottom-right part
-of the new array in two-dimensional case. Use [`cpaddedviews`](@ref) if _both_ directions
+of the new array in two-dimensional case. Use [`sym_paddedviews`](@ref) if _both_ directions
 need to be padded.
 
 The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
@@ -204,7 +204,7 @@ padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)
 
 
 """
-    Aspad = cpaddedviews(fillvalue, A1, A2, ....)
+    Aspad = sym_paddedviews(fillvalue, A1, A2, ....)
 
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes, chosen as the span of axes
 enclosing all of the input arrays.
@@ -226,7 +226,7 @@ julia> a2 = [4 5 6]
 1×3 Array{Int64,2}:
  4  5  6
 
-julia> a1p, a2p = cpaddedviews(-1, a1, a2);
+julia> a1p, a2p = sym_paddedviews(-1, a1, a2);
 
 julia> a1p
 3×3 PaddedView(-1, ::Array{Int64,2}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
@@ -247,13 +247,13 @@ julia> a1p[CartesianIndices(a1)]
  3
  ```
 """
-function cpaddedviews(fillvalue, As::AbstractArray...)
+function sym_paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
-    map((A, A_axes)->PaddedView(fillvalue, A, _cpad_inds(A_axes, inds)), As, axes.(As))
+    map((A, A_axes)->PaddedView(fillvalue, A, _sym_pad_inds(A_axes, inds)), As, axes.(As))
 end
-cpaddedviews(fillvalue) = ()
+sym_paddedviews(fillvalue) = ()
 
-function _cpad_inds(A_axes, inds)
+function _sym_pad_inds(A_axes, inds)
     map(A_axes, inds) do ax, i
         pad_sz = length(i) - length(ax)
         offset = pad_sz ÷ 2

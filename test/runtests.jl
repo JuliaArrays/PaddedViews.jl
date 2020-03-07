@@ -116,11 +116,11 @@ end
     @test paddedviews(-1, a) == (a,)
 end
 
-@testset "cpaddedviews" begin
+@testset "sym_paddedviews" begin
     # even case
     a1 = reshape([1,2], 2, 1)
     a2 = [1.0,2.0]'
-    a1p, a2p = @inferred(cpaddedviews(0, a1, a2))
+    a1p, a2p = @inferred(sym_paddedviews(0, a1, a2))
     @test a1p == [1 0; 2 0]
     @test a1p[CartesianIndices(a1)] == a1
     @test a2p == [1.0 2.0; 0.0 0.0]
@@ -131,7 +131,7 @@ end
 
     a1 = reshape([1,2,3], 3, 1)
     a2 = [1.0,2.0,3.0]'
-    a1p, a2p = @inferred(cpaddedviews(0, a1, a2))
+    a1p, a2p = @inferred(sym_paddedviews(0, a1, a2))
 
     @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
     @test a1p[CartesianIndices(a1)] == a1
@@ -143,7 +143,7 @@ end
     @test axes(a2p) === (0:2, 1:3)
 
     a3 = OffsetArray([1.0,2.0,3.0]', (0,-1))
-    a1p, a3p = @inferred(cpaddedviews(0, a1, a3))
+    a1p, a3p = @inferred(sym_paddedviews(0, a1, a3))
 
     @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], 1:3, 0:2)
     @test a1p[CartesianIndices(a1)] == a1
@@ -154,7 +154,7 @@ end
     @test axes(a1p) == (1:3, 0:2)
     @test axes(a3p) == (0:2, 0:2)
 
-    @test @inferred(cpaddedviews(3)) == ()
+    @test @inferred(sym_paddedviews(3)) == ()
 end
 
 @testset "showarg" begin
