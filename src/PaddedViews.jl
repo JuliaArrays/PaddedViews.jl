@@ -75,6 +75,13 @@ struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
     fillvalue::T
     data::A
     indices::I
+
+    function PaddedView{T,N,I,A}(fillvalue,
+                                 data,
+                                 indices::NTuple{N,AbstractUnitRange}) where {T,N,I,A}
+        ndims(data) == N || throw(DimensionMismatch("data and indices should have the same dimension, instead they're $(ndims(data)) and $N."))
+        new{T,N,I,A}(fillvalue, data, indices)
+    end
 end
 
 function PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N}
