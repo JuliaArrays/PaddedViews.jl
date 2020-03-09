@@ -165,3 +165,53 @@ end
     str = String(take!(io))
     @test endswith(str, "PaddedView(-1, ::Array{$Int,2}, (0:4, 1:3)) with eltype $Int with indices 0:4×1:3:\n -1  -1  -1\n  1   4   7\n  2   5   8\n  3   6   9\n -1  -1  -1")
 end
+
+@testset "similar" begin
+    for (T, v) in ((Int, 0),
+                   (Int, 0.),
+                   (Float64, 0.),
+                   (Missing, missing),
+                   (Nothing, nothing))
+        A = reshape(1:9, 3, 3)
+        Ap = @inferred(PaddedView(v, A, (0:4, 0:4)))
+        B = similar(Ap)
+        @test eltype(B) == eltype(Ap)
+        @test size(B) == size(Ap)
+        @test axes(B) == axes(Ap)
+
+        B = similar(Ap, (4, 4))
+        @test eltype(B) == eltype(Ap)
+        @test size(B) == (4, 4)
+        @test axes(B) == (Base.OneTo(4), Base.OneTo(4))
+
+        B = similar(Ap, (4, 4))
+        @test eltype(B) == eltype(Ap)
+        @test size(B) == (4, 4)
+        @test axes(B) == (Base.OneTo(4), Base.OneTo(4))
+
+        B = similar(Ap, Int, (4, 4))
+        @test eltype(B) == Int
+        @test size(B) == (4, 4)
+        @test axes(B) == (Base.OneTo(4), Base.OneTo(4))
+    end
+end
+
+@testset "nothing/missing" begin
+    for (T, v) in ((Missing, missing),
+                 (Nothing, nothing))
+        A = reshape(1:9, 3, 3)
+        Ap = @inferred(PaddedView(v, A, (0:4, 0:4)))
+        @test axes(Ap) == (OffsetArrays.IdOffsetRange(0:4), OffsetArrays.IdOffsetRange(0:4))
+        @test eltype(Ap) === Union{T, eltype(A)}
+        @test Ap[0, 0] === v
+        @test Ap[1, 1] === 1
+        @test Ap[axes(A)...] == A
+
+        Ap = @inferred(PaddedView(v, A, (5, 5)))
+        @test axes(Ap) === (Base.OneTo(5), Base.OneTo(5))
+        @test eltype(Ap) === Union{T, eltype(A)}
+        @test Ap[4, 4] === v
+        @test Ap[1, 1] === 1
+        @test Ap[axes(A)...] == A
+    end
+end
