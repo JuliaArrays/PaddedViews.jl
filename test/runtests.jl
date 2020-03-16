@@ -1,7 +1,9 @@
 using OffsetArrays
+using ImageCore
 using Test
 ambs = detect_ambiguities(Base, Core)  # in case these have ambiguities of their own
 using PaddedViews
+using PaddedViews: filltype
 @testset "ambiguities" begin
     @test isempty(setdiff(detect_ambiguities(PaddedViews, Base, Core), ambs))
 end
@@ -197,6 +199,13 @@ end
 end
 
 @testset "nothing/missing" begin
+    for (FT, T) in ((Missing, Float32),
+                    (Nothing, Float32))
+        @test @inferred(filltype(FT, T)) === Union{FT, T}
+        @test @inferred(filltype(T, Union{FT, T})) === Union{FT, T}
+        @test @inferred(filltype(FT, Union{FT, T})) === Union{FT, T}
+    end
+
     for (T, v) in ((Missing, missing),
                  (Nothing, nothing))
         A = reshape(1:9, 3, 3)
@@ -214,4 +223,88 @@ end
         @test Ap[1, 1] === 1
         @test Ap[axes(A)...] == A
     end
+end
+
+@testset "colortypes" begin
+    # don't promote to Colorant if it's a numerical array
+    @test @inferred(filltype(Gray{N0f8}, Float32)) === Float32
+
+    # cases that don't promote array eltype:
+    #   * (Number, Colorant)
+    #   * (Gray, Gray)
+    #   * (Gray, Color3)
+    #   * (Color3, Color3)
+    #   * (Color3, TransparentColor)
+    #   * (TransparentColor, TransparentColor)
+    @test @inferred(filltype(Float32, Gray{N0f8})) == Gray{N0f8}
+    @test @inferred(filltype(Float32, RGB{N0f8})) == RGB{N0f8}
+    @test @inferred(filltype(Gray{Float32}, Gray{N0f8})) === Gray{N0f8}
+    @test @inferred(filltype(Gray{N0f8}, Gray{Float32})) === Gray{Float32}
+    @test @inferred(filltype(Gray{Float32}, RGB{N0f8})) === RGB{N0f8}
+    @test @inferred(filltype(Gray{N0f8}, RGB{Float32})) === RGB{Float32}
+    @test @inferred(filltype(RGB{Float32}, RGB{N0f8})) === RGB{N0f8}
+    @test @inferred(filltype(RGB{N0f8}, RGB{Float32})) === RGB{Float32}
+    @test @inferred(filltype(Lab{Float32}, RGB{N0f8})) === RGB{N0f8}
+    @test @inferred(filltype(RGB{N0f8}, Lab{Float32})) === Lab{Float32}
+
+    @test @inferred(filltype(Gray{N0f8}, AGray{Float32})) === AGray{Float32}
+    @test @inferred(filltype(Gray{Float32}, AGray{N0f8})) === AGray{N0f8}
+    @test @inferred(filltype(Gray{N0f8}, ARGB{Float32})) === ARGB{Float32}
+    @test @inferred(filltype(Gray{Float32}, ARGB{N0f8})) === ARGB{N0f8}
+    @test @inferred(filltype(BGR{N0f8}, ARGB{Float32})) === ARGB{Float32}
+    @test @inferred(filltype(BGR{Float32}, ARGB{N0f8})) === ARGB{N0f8}
+    @test @inferred(filltype(AGray{N0f8}, ARGB{Float32})) === ARGB{Float32}
+    @test @inferred(filltype(AGray{Float32}, ARGB{N0f8})) === ARGB{N0f8}
+
+    # cases that promote both colorant type and storage type
+    #   * (Color3, Gray)
+    #   * (TransparentColor, Colorant)
+    @test @inferred(filltype(RGB{N0f8}, Gray{Float32})) === RGB{Float32}
+    @test @inferred(filltype(RGB{Float32}, Gray{N0f8})) === RGB{Float32}
+    @test @inferred(filltype(Lab{Float32}, Gray{N0f8})) === Lab{Float32}
+    @test @inferred(filltype(Lab{Float32}, Gray{Float64})) === Lab{Float64}
+
+    @test @inferred(filltype(AGray{N0f8}, Gray{Float32})) === AGray{Float32}
+    @test @inferred(filltype(AGray{Float32}, Gray{N0f8})) === AGray{Float32}
+    @test @inferred(filltype(AGray{N0f8}, RGB{Float32})) === ARGB{Float32}
+    @test @inferred(filltype(AGray{Float32}, RGB{N0f8})) === ARGB{Float32}
+    @test @inferred(filltype(AGray{N0f8}, Lab{Float32})) === ALab{Float32}
+    @test @inferred(filltype(AGray{Float64}, Lab{Float32})) === ALab{Float64}
+
+    @test @inferred(filltype(ARGB{N0f8}, Gray{Float32})) === ARGB{Float32}
+    @test @inferred(filltype(ARGB{Float32}, Gray{N0f8})) === ARGB{Float32}
+    @test @inferred(filltype(ARGB{N0f8}, BGR{Float32})) === ABGR{Float32}
+    @test @inferred(filltype(ARGB{Float32}, BGR{N0f8})) === ABGR{Float32}
+    @test @inferred(filltype(ARGB{N0f8}, Lab{Float32})) === ALab{Float32}
+    @test @inferred(filltype(ARGB{Float64}, Lab{Float32})) === ALab{Float64}
+
+
+    A = Gray{N0f8}[Gray(0.) Gray(0.3); Gray(0.6) Gray(1.)]
+    fv = Gray{N0f8}(0)
+    Ap = PaddedView(fv, A, (-1:4, -1:4))
+    @test eltype(Ap) == Gray{N0f8}
+    @test @inferred(getindex(Ap, -1, -1)) === fv
+    @test @inferred(getindex(Ap, 2, 2)) === Gray{N0f8}(1.)
+    @test Ap[axes(A)...] == A
+
+    fv = RGB{Float32}(1., 0., 0.)
+    Ap = PaddedView(fv, A, (-1:4, -1:4))
+    @test eltype(Ap) == RGB{Float32}
+    @test @inferred(getindex(Ap, -1, -1)) === fv
+    @test @inferred(getindex(Ap, 2, 2)) === RGB{Float32}(1., 1., 1.)
+    @test Ap[axes(A)...] == RGB{Float32}.(A)
+
+    fv = AGray{Float32}(0.5, 0)
+    Ap = PaddedView(fv, A, (-1:4, -1:4))
+    @test eltype(Ap) == AGray{Float32}
+    @test @inferred(getindex(Ap, -1, -1)) === fv
+    @test @inferred(getindex(Ap, 2, 2)) === AGray{Float32}(1., 1.)
+    @test Ap[axes(A)...] == AGray{Float32}.(A)
+
+    fv = ARGB{Float32}(0.5, 0., 0., 0.)
+    Ap = PaddedView(fv, A, (-1:4, -1:4))
+    @test eltype(Ap) == ARGB{Float32}
+    @test @inferred(getindex(Ap, -1, -1)) === fv
+    @test @inferred(getindex(Ap, 2, 2)) === ARGB{Float32}(1., 1., 1., 1.)
+    @test Ap[axes(A)...] == ARGB{Float32}.(A)
 end

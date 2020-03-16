@@ -4,13 +4,16 @@ version = "0.5.3"
 
 [deps]
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [compat]
 OffsetArrays = "0.10, 0.11, 1"
+Requires = "0.5, 1"
 julia = "0.7, 1"
 
 [extras]
+ImageCore = "a09fc81d-aa75-5fe9-8630-4744c3626534"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["ImageCore", "Test"]
