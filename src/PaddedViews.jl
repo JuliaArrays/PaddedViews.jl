@@ -84,16 +84,33 @@ struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
     end
 end
 
-function PaddedView(fillvalue, data::AbstractArray{T,N}, indices) where {T,N}
-    _T = fillvalue isa Union{Missing, Nothing} ? Union{typeof(fillvalue), T} : T
-    PaddedView{_T,N,typeof(indices),typeof(data)}(convert(_T, fillvalue), data, indices)
+function PaddedView(fillvalue::FT,
+                    data::AbstractArray{T,N},
+                    indices) where {FT,T,N}
+    _FT = filltype(FT, T)
+    PaddedView{_FT,N,typeof(indices),typeof(data)}(convert(_FT, fillvalue), data, indices)
 end
 
-function PaddedView(fillvalue, data::AbstractArray{T,N}, sz::Tuple{Integer,Vararg{Integer}}) where {T,N}
+function PaddedView(fillvalue::FT,
+                    data::AbstractArray{T,N},
+                    sz::Tuple{Integer,Vararg{Integer}}) where {FT,T,N}
     inds = map(OneTo, sz)
-    _T = fillvalue isa Union{Missing, Nothing} ? Union{typeof(fillvalue), T} : T
-    PaddedView{_T,N,typeof(inds),typeof(data)}(convert(_T, fillvalue), data, inds)
+    _FT = filltype(FT, T)
+    PaddedView{_FT,N,typeof(inds),typeof(data)}(convert(_FT, fillvalue), data, inds)
 end
+
+# No need to export this
+# 
+# **Regardless of accuracy**, when `data` cannot represent the exact meaning of fillvalue
+# object, the type of `fillvalue` should be lifted to a common type.
+# Examples of this are: `Nothing`, `Missing`, `ColorTypes.Colorant`
+#
+# Since eltype of `data` will be lazily promoted to the filltype, it's likely to hit a
+# performance issue if we abuse `filltype` by also considering storage type (e.g,
+# `Float32`/`Float64`). Thus we shouldn't add lines like:
+# `filltype(::Type{FT}, ::Type{T}) where {FT<:Real, T<:Real} = promote_type(FT, T)`
+filltype(::Type, ::Type{T}) where T = T
+filltype(::Type{FT}, ::Type{T}) where {FT<:Union{Nothing, Missing}, T} = Union{FT, T}
 
 # This method eliminates an ambiguity between the two below it
 function PaddedView(fillvalue,
@@ -132,7 +149,7 @@ Base.parent(A::PaddedView) = A.data
 @inline function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
     if Base.checkbounds(Bool, A.data, i...)
-        return A.data[i...]
+        return convert(T, A.data[i...])
     end
     return A.fillvalue
 end
