@@ -2,6 +2,7 @@ using OffsetArrays
 using Test
 ambs = detect_ambiguities(Base, Core)  # in case these have ambiguities of their own
 using PaddedViews
+using PaddedViews: filltype
 @testset "ambiguities" begin
     @test isempty(setdiff(detect_ambiguities(PaddedViews, Base, Core), ambs))
 end
@@ -197,6 +198,13 @@ end
 end
 
 @testset "nothing/missing" begin
+    for (FT, T) in ((Missing, Float32),
+                    (Nothing, Float32))
+        @test @inferred(filltype(FT, T)) === Union{FT, T}
+        @test @inferred(filltype(T, Union{FT, T})) === Union{FT, T}
+        @test @inferred(filltype(FT, Union{FT, T})) === Union{FT, T}
+    end
+
     for (T, v) in ((Missing, missing),
                  (Nothing, nothing))
         A = reshape(1:9, 3, 3)
