@@ -84,19 +84,21 @@ struct PaddedView{T,N,I,A} <: AbstractArray{T,N}
     end
 end
 
-function PaddedView(fillvalue::FT,
-                    data::AbstractArray{T,N},
-                    indices) where {FT,T,N}
-    _FT = filltype(FT, T)
-    PaddedView{_FT,N,typeof(indices),typeof(data)}(convert(_FT, fillvalue), data, indices)
+function PaddedView(fillvalue::FT, data::AbstractArray{T}, args...) where {FT, T}
+    PaddedView{filltype(FT, T)}(fillvalue, data, args...)
 end
 
-function PaddedView(fillvalue::FT,
+function PaddedView{FT}(fillvalue,
+                    data::AbstractArray{T,N},
+                    indices) where {FT,T,N}
+    PaddedView{FT,N,typeof(indices),typeof(data)}(convert(FT, fillvalue), data, indices)
+end
+
+function PaddedView{FT}(fillvalue,
                     data::AbstractArray{T,N},
                     sz::Tuple{Integer,Vararg{Integer}}) where {FT,T,N}
     inds = map(OneTo, sz)
-    _FT = filltype(FT, T)
-    PaddedView{_FT,N,typeof(inds),typeof(data)}(convert(_FT, fillvalue), data, inds)
+    PaddedView{FT,N,typeof(inds),typeof(data)}(convert(FT, fillvalue), data, inds)
 end
 
 # No need to export this
@@ -108,33 +110,34 @@ end
 # Since eltype of `data` will be lazily promoted to the filltype, it's likely to hit a
 # performance issue if we abuse `filltype` by also considering storage type (e.g,
 # `Float32`/`Float64`). Thus we shouldn't add lines like:
-# `filltype(::Type{FT}, ::Type{T}) where {FT<:Real, T<:Real} = promote_type(FT, T)`
+#     `filltype(::Type{FT}, ::Type{T}) where {FT<:Real, T<:Real} = promote_type(FT, T)`
+# Ref: https://github.com/JuliaArrays/PaddedViews.jl/pull/25#issuecomment-610039569
 filltype(::Type, ::Type{T}) where T = T
 filltype(::Type{FT}, ::Type{T}) where {FT<:Union{Nothing, Missing}, T} = Union{FT, T}
 
 # This method eliminates an ambiguity between the two below it
-function PaddedView(fillvalue,
+function PaddedView{FT}(fillvalue,
                     data::AbstractArray{T,0},
                     ::Tuple{},
-                    ::Tuple{}) where T
-    return PaddedView(fillvalue, data, ())
+                    ::Tuple{}) where {FT,T}
+    return PaddedView{FT}(fillvalue, data, ())
 end
 
-function PaddedView(fillvalue,
+function PaddedView{FT}(fillvalue,
                     data::AbstractArray{T,N},
                     padded_inds::NTuple{N,AbstractUnitRange},
-                    data_inds::NTuple{N,AbstractUnitRange}) where {T,N}
+                    data_inds::NTuple{N,AbstractUnitRange}) where {FT,T,N}
     off_data = OffsetArray(data, data_inds...)
-    return PaddedView(fillvalue, off_data, padded_inds)
+    return PaddedView{FT}(fillvalue, off_data, padded_inds)
 end
 
-function PaddedView(fillvalue,
+function PaddedView{FT}(fillvalue,
                     data::AbstractArray{T,N},
                     sz::NTuple{N,Integer},
-                    first_datum::NTuple{N,Integer}) where {T,N}
+                    first_datum::NTuple{N,Integer}) where {FT,T,N}
     padded_inds = map(OneTo, sz)
     data_inds   = map((ax, o)->ax.+o, axes(data), first_datum .- 1)
-    return PaddedView(fillvalue, data, padded_inds, data_inds)
+    return PaddedView{FT}(fillvalue, data, padded_inds, data_inds)
 end
 
 Base.axes(A::PaddedView) = A.indices

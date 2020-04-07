@@ -33,6 +33,9 @@ end
                 2 5 8 0 0;
                 3 6 9 0 0;
                 0 0 0 0 0]
+    A32 = @inferred(PaddedView{Float32}(0.0, a, (Base.OneTo(4), Base.OneTo(5))))
+    @test eltype(A32) == Float32
+    @test A32 == A
 
     A = @inferred(PaddedView(0.0, a, (0:4, -1:5)))
     @test eltype(A) == Int
@@ -45,6 +48,9 @@ end
                             0 0 2 5 8 0 0;
                             0 0 3 6 9 0 0;
                             0 0 0 0 0 0 0], 0:4, -1:5)
+    A32 = @inferred(PaddedView{Float32}(0.0, a, (0:4, -1:5)))
+    @test eltype(A32) == Float32
+    @test A32 == A
 
     A = @inferred(PaddedView(0.0, a, (Base.OneTo(5), Base.OneTo(5)), (2:4, 2:4)))
     @test A == [0 0 0 0 0;
@@ -52,7 +58,15 @@ end
                 0 2 5 8 0;
                 0 3 6 9 0;
                 0 0 0 0 0]
+    A32 = @inferred(PaddedView{Float32}(0.0, a, (Base.OneTo(5), Base.OneTo(5)), (2:4, 2:4)))
+    @test eltype(A32) == Float32
+    @test A32 == A
+
     @test A == @inferred(PaddedView(0.0, a, (5, 5), (2, 2)))
+    A32 = @inferred(PaddedView{Float32}(0.0, a, (5, 5), (2, 2)))
+    @test eltype(A32) == Float32
+    @test A32 == A
+    
     B = @inferred(PaddedView(0.0, OffsetArray(a, (2:4, 2:4)), (Base.OneTo(5), Base.OneTo(5))))
     @test B == A
 
