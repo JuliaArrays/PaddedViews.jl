@@ -7,6 +7,9 @@ using PaddedViews: filltype
     @test isempty(setdiff(detect_ambiguities(PaddedViews, Base, Core), ambs))
 end
 
+using Documenter
+doctest(PaddedViews, manual = false)
+
 @testset "PaddedView" begin
     for n = 0:5
         a = @inferred(PaddedView(0, ones(Int,ntuple(d->1,n)), ntuple(x->x+1,n)))
