@@ -32,7 +32,9 @@ Specifically, `datapadded[first_datum...]` corresponds to `data[1, 1, ...]`.
 
 # Example
 
-```julia
+```jldoctest
+julia> using PaddedViews
+
 julia> a = collect(reshape(1:9, 3, 3))
 3×3 Array{Int64,2}:
  1  4  7
@@ -46,21 +48,21 @@ julia> PaddedView(-1, a, (4, 5))
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
 
- julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
- 5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (1:5, 1:5)) with eltype Int64 with indices 1:5×1:5:
+julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
+5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (1:5, 1:5)) with eltype Int64 with indices 1:5×1:5:
  -1  -1  -1  -1  -1
  -1   1   4   7  -1
  -1   2   5   8  -1
  -1   3   6   9  -1
  -1  -1  -1  -1  -1
 
- julia> PaddedView(-1, a, (0:4, 0:4))
- 5×5 PaddedView(-1, ::Array{Int64,2}, (0:4, 0:4)) with eltype Int64 with indices 0:4×0:4:
-  -1  -1  -1  -1  -1
-  -1   1   4   7  -1
-  -1   2   5   8  -1
-  -1   3   6   9  -1
-  -1  -1  -1  -1  -1
+julia> PaddedView(-1, a, (0:4, 0:4))
+5×5 PaddedView(-1, ::Array{Int64,2}, (0:4, 0:4)) with eltype Int64 with indices 0:4×0:4:
+ -1  -1  -1  -1  -1
+ -1   1   4   7  -1
+ -1   2   5   8  -1
+ -1   3   6   9  -1
+ -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (5,5), (2,2))
 5×5 PaddedView(-1, OffsetArray(::Array{Int64,2}, 2:4, 2:4), (Base.OneTo(5), Base.OneTo(5))) with eltype Int64:
@@ -169,6 +171,8 @@ that `Ap[CartesianIndices(A)] == A`.
 
 # Example:
 ```jldoctest
+julia> using PaddedViews
+
 julia> a1 = reshape([1, 2, 3], 3, 1)
 3×1 Array{Int64,2}:
  1
@@ -237,6 +241,8 @@ The axes of original array `A` will be preserved in the padded result `Ap`, henc
 that `Ap[CartesianIndices(A)] == A`.
 
 ```jldoctest
+julia> using PaddedViews
+
 julia> a1 = reshape([1, 2, 3], 3, 1)
 3×1 Array{Int64,2}:
  1

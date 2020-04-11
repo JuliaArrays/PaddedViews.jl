@@ -7,6 +7,12 @@ using PaddedViews: filltype
     @test isempty(setdiff(detect_ambiguities(PaddedViews, Base, Core), ambs))
 end
 
+if VERSION >= v"1.2"
+    # array summary changes after v1.2
+    using Documenter
+    doctest(PaddedViews, manual = false)
+end
+
 @testset "PaddedView" begin
     for n = 0:5
         a = @inferred(PaddedView(0, ones(Int,ntuple(d->1,n)), ntuple(x->x+1,n)))
