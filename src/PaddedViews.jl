@@ -9,6 +9,7 @@ export PaddedView, paddedviews, sym_paddedviews
     datapadded = PaddedView(fillvalue, data, padded_axes, data_axes)
     datapadded = PaddedView(fillvalue, data, sz)
     datapadded = PaddedView(fillvalue, data, sz, first_datum)
+    datapadded = PaddedView{T}(args...)
 
 Create a padded version of the array `data`, where any elements within
 the span of `padded_axes` not assigned in `data` will have value
@@ -29,6 +30,11 @@ One may optionally specify the location of the `[1, 1, ...]` element of `data` w
 `first_datum`.
 Specifically, `datapadded[first_datum...]` corresponds to `data[1, 1, ...]`.
 `first_datum` defaults to all-1s.
+
+The view eltype `T` is optional. If not specified, then in most cases, `T` is inferred to be
+`eltype(data)`. In cases when `fillvalue` can't be converted to `eltype(data)`, `T` will be
+promoted the one that does. For example, when `fillvalue == nothing` and `eltype(data) == Float32`,
+the inferred eltype `T` will be `Union{Nothing, Float32}`.
 
 # Example
 
