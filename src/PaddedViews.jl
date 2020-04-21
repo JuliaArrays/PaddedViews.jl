@@ -309,4 +309,8 @@ function Base.showarg(io::IO, A::PaddedView, toplevel)
     toplevel && print(io, " with eltype ", eltype(A))
 end
 
+# The fallbacks work, but this is more efficient
+Base.any(A::PaddedView) = A.fillvalue || any(parent(A))
+Base.all(A::PaddedView) = A.fillvalue && all(parent(A))
+
 end # module

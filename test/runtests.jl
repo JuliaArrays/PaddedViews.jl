@@ -251,3 +251,16 @@ end
         @test Ap[axes(A)...] == A
     end
 end
+
+@testset "specializations" begin
+    for (p, v) in ((true, true), (true, false), (false, true), (false, false))
+        a = fill(v, (1, 1))
+        pa = PaddedView(p, a, (1:2, 1:2))
+        mpa = collect(pa)
+
+        # ensure specializations are equivalent to fallbacks
+        for f in (any, all)
+            @test f(pa) == f(mpa)
+        end
+    end
+end
