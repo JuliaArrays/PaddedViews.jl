@@ -310,7 +310,8 @@ function Base.showarg(io::IO, A::PaddedView, toplevel)
 end
 
 # The fallbacks work, but this is more efficient
-Base.any(A::PaddedView) = A.fillvalue || any(parent(A))
-Base.all(A::PaddedView) = A.fillvalue && all(parent(A))
+# TODO use use short-circuit evaluation,
+Base.any(f::Function, A::PaddedView) = f(A.fillvalue) | any(f, parent(A))
+Base.all(f::Function, A::PaddedView) = f(A.fillvalue) & all(f, parent(A))
 
 end # module
