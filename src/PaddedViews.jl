@@ -122,6 +122,9 @@ end
 # Ref: https://github.com/JuliaArrays/PaddedViews.jl/pull/25#issuecomment-610039569
 filltype(::Type, ::Type{T}) where T = T
 filltype(::Type{FT}, ::Type{T}) where {FT<:Union{Nothing, Missing}, T} = Union{FT, T}
+filltype(::Type{FT}, ::Type{T}) where {FT, T<:Union{Nothing, Missing}} = Union{FT, T}
+# ambiguity patch
+filltype(::Type{FT}, ::Type{T}) where {FT<:Union{Nothing, Missing}, T<:Union{Nothing, Missing}} = Union{FT, T}
 
 # This method eliminates an ambiguity between the two below it
 function PaddedView{FT}(fillvalue,

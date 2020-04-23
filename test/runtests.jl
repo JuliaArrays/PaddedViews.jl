@@ -223,7 +223,11 @@ end
 
 @testset "nothing/missing" begin
     for (FT, T) in ((Missing, Float32),
-                    (Nothing, Float32))
+                    (Nothing, Float32),
+                    (Float32, Nothing),
+                    (Float32, Missing),
+                    (Nothing, Missing),
+                    (Missing, Nothing))
         @test @inferred(filltype(FT, T)) === Union{FT, T}
         @test @inferred(filltype(T, Union{FT, T})) === Union{FT, T}
         @test @inferred(filltype(FT, Union{FT, T})) === Union{FT, T}
