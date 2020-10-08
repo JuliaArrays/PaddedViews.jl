@@ -42,20 +42,20 @@ the inferred eltype `T` will be `Union{Nothing, Float32}`.
 julia> using PaddedViews
 
 julia> a = collect(reshape(1:9, 3, 3))
-3×3 Array{$Int,2}:
+3×3 $(Array{Int,2}):
  1  4  7
  2  5  8
  3  6  9
 
 julia> PaddedView(-1, a, (4, 5))
-4×5 PaddedView(-1, ::Array{$Int,2}, (Base.OneTo(4), Base.OneTo(5))) with eltype $Int:
+4×5 PaddedView(-1, ::$(Array{Int,2}), (Base.OneTo(4), Base.OneTo(5))) with eltype $Int:
   1   4   7  -1  -1
   2   5   8  -1  -1
   3   6   9  -1  -1
  -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
-5×5 PaddedView(-1, OffsetArray(::Array{$Int,2}, 2:4, 2:4), (1:5, 1:5)) with eltype $Int with indices 1:5×1:5:
+5×5 PaddedView(-1, OffsetArray(::$(Array{Int,2}), 2:4, 2:4), (1:5, 1:5)) with eltype $Int with indices 1:5×1:5:
  -1  -1  -1  -1  -1
  -1   1   4   7  -1
  -1   2   5   8  -1
@@ -63,7 +63,7 @@ julia> PaddedView(-1, a, (1:5,1:5), (2:4,2:4))
  -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (0:4, 0:4))
-5×5 PaddedView(-1, ::Array{$Int,2}, (0:4, 0:4)) with eltype $Int with indices 0:4×0:4:
+5×5 PaddedView(-1, ::$(Array{Int,2}), (0:4, 0:4)) with eltype $Int with indices 0:4×0:4:
  -1  -1  -1  -1  -1
  -1   1   4   7  -1
  -1   2   5   8  -1
@@ -71,7 +71,7 @@ julia> PaddedView(-1, a, (0:4, 0:4))
  -1  -1  -1  -1  -1
 
 julia> PaddedView(-1, a, (5,5), (2,2))
-5×5 PaddedView(-1, OffsetArray(::Array{$Int,2}, 2:4, 2:4), (Base.OneTo(5), Base.OneTo(5))) with eltype $Int:
+5×5 PaddedView(-1, OffsetArray(::$(Array{Int,2}), 2:4, 2:4), (Base.OneTo(5), Base.OneTo(5))) with eltype $Int:
  -1  -1  -1  -1  -1
  -1   1   4   7  -1
  -1   2   5   8  -1
@@ -186,31 +186,31 @@ that `Ap[CartesianIndices(A)] == A`.
 julia> using PaddedViews
 
 julia> a1 = reshape([1, 2, 3], 3, 1)
-3×1 Array{$Int,2}:
+3×1 $(Array{Int,2}):
  1
  2
  3
 
 julia> a2 = [4 5 6]
-1×3 Array{$Int,2}:
+1×3 $(Array{Int,2}):
  4  5  6
 
 julia> a1p, a2p = paddedviews(-1, a1, a2);
 
 julia> a1p
-3×3 PaddedView(-1, ::Array{$Int,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype $Int:
+3×3 PaddedView(-1, ::$(Array{Int,2}), (Base.OneTo(3), Base.OneTo(3))) with eltype $Int:
  1  -1  -1
  2  -1  -1
  3  -1  -1
 
 julia> a2p
-3×3 PaddedView(-1, ::Array{$Int,2}, (Base.OneTo(3), Base.OneTo(3))) with eltype $Int:
+3×3 PaddedView(-1, ::$(Array{Int,2}), (Base.OneTo(3), Base.OneTo(3))) with eltype $Int:
   4   5   6
  -1  -1  -1
  -1  -1  -1
 
 julia> a1p[CartesianIndices(a1)]
-3×1 Array{$Int,2}:
+3×1 $(Array{Int,2}):
  1
  2
  3
@@ -256,31 +256,31 @@ that `Ap[CartesianIndices(A)] == A`.
 julia> using PaddedViews
 
 julia> a1 = reshape([1, 2, 3], 3, 1)
-3×1 Array{$Int,2}:
+3×1 $(Array{Int,2}):
  1
  2
  3
 
 julia> a2 = [4 5 6]
-1×3 Array{$Int,2}:
+1×3 $(Array{Int,2}):
  4  5  6
 
 julia> a1p, a2p = sym_paddedviews(-1, a1, a2);
 
 julia> a1p
-3×3 PaddedView(-1, ::Array{$Int,2}, (1:3, 0:2)) with eltype $Int with indices 1:3×0:2:
+3×3 PaddedView(-1, ::$(Array{Int,2}), (1:3, 0:2)) with eltype $Int with indices 1:3×0:2:
  -1  1  -1
  -1  2  -1
  -1  3  -1
 
 julia> a2p
-3×3 PaddedView(-1, ::Array{$Int,2}, (0:2, 1:3)) with eltype $Int with indices 0:2×1:3:
+3×3 PaddedView(-1, ::$(Array{Int,2}), (0:2, 1:3)) with eltype $Int with indices 0:2×1:3:
  -1  -1  -1
   4   5   6
  -1  -1  -1
 
 julia> a1p[CartesianIndices(a1)]
-3×1 Array{$Int,2}:
+3×1 $(Array{Int,2}):
  1
  2
  3
