@@ -76,7 +76,7 @@ end
     @test eltype(A32) == Float32
     @test A32 == A
     @test A32[2, 2] === 1.0f0
-    
+
     B = @inferred(PaddedView(0.0, OffsetArray(a, (2:4, 2:4)), (Base.OneTo(5), Base.OneTo(5))))
     @test B == A
 
@@ -188,7 +188,7 @@ end
     io = IOBuffer()
     show(IOContext(io, :displaysize=>(1000,1000)), MIME("text/plain"), pv)
     str = String(take!(io))
-    @test endswith(str, "PaddedView(-1, ::Array{$Int,2}, (0:4, 1:3)) with eltype $Int with indices 0:4×1:3:\n -1  -1  -1\n  1   4   7\n  2   5   8\n  3   6   9\n -1  -1  -1")
+    @test endswith(str, "PaddedView(-1, ::$(Array{Int,2}), (0:4, 1:3)) with eltype $Int with indices 0:4×1:3:\n -1  -1  -1\n  1   4   7\n  2   5   8\n  3   6   9\n -1  -1  -1")
 end
 
 @testset "similar" begin
