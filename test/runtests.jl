@@ -251,3 +251,56 @@ end
         @test Ap[axes(A)...] == A
     end
 end
+
+@testset "setindex!" begin
+    @testset "1d" begin
+        A = collect(1:3)
+        Ap = PaddedView(missing, A, (0:4, ))
+        @test axes(Ap) == (0:4,)
+        @test ismissing(Ap[0])
+        @test_throws BoundsError Ap[0] = 1
+        Ap[1] = 10
+        @test Ap[1] == 10
+
+        A = collect(1:3)
+        Ap = PaddedView(missing, A, (4:6, ))
+        @test axes(Ap) == (4:6, )
+        @test all(ismissing, Ap)
+        @test_throws BoundsError Ap[1] = 1 # still throw a BoundsError
+
+        A = collect(1:3)
+        Ap = PaddedView(missing, OffsetArray(A, -1), (0:4, ))
+        @test axes(Ap) == (0:4, )
+        @test Ap[0] === 1
+        @test ismissing(Ap[4])
+        Ap[0] = 10
+        @test Ap[0] == 10
+        @test_throws BoundsError Ap[4] = 1
+    end
+
+    @testset "2d" begin
+        A = reshape(collect(1:6), 2, 3)
+        Ap = PaddedView(missing, A, (0:4, 0:4))
+        @test axes(Ap) == (0:4, 0:4)
+        @test ismissing(Ap[0, 0])
+        err = ArgumentError("`setindex!` with IndexLinear `7` is not supported for `PaddedView`. You may convert it to `CartesianIndex` first.")
+        @test_throws err Ap[7] = 10
+        Ap[1, 1] = 10
+        @test Ap[7] == Ap[1, 1] == 10
+
+        A = reshape(collect(1:6), 2, 3)
+        Ap = PaddedView(missing, A, (3:4, 4:6))
+        @test axes(Ap) == (3:4, 4:6)
+        @test all(ismissing, collect(Ap))
+        @test_throws BoundsError Ap[1, 1] = 1
+
+        A = reshape(collect(1:6), 2, 3)
+        Ap = PaddedView(missing, OffsetArray(A, -1, -1), (0:4, 0:4))
+        @test axes(Ap) == (0:4, 0:4)
+        @test Ap[0, 0] === 1
+        @test ismissing(Ap[4, 4])
+        Ap[0, 0] = 10
+        @test Ap[0, 0] == 10
+        @test_throws BoundsError Ap[4, 4] = 1
+    end
+end
