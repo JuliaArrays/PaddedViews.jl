@@ -168,17 +168,12 @@ Base.parent(A::PaddedView) = A.data
     return A.fillvalue
 end
 
-# Checking if a linear index is in the valid region is not efficient, so we only support
-# IndexCartesian method here
 function Base.setindex!(A::PaddedView{T, N}, v, i::Vararg{Int, N}) where {T, N}
     @boundscheck checkbounds(A, i...)
+    @boundscheck checkbounds(A.data, i...)
+
     setindex!(A.data, v, i...)
 end
-function Base.setindex!(A::PaddedView{T, 1}, v, i::Int) where {T}
-    @boundscheck checkbounds(A, i...)
-    setindex!(A.data, v, i...)
-end
-Base.setindex!(A::PaddedView{T, N}, v, i::Int) where {T, N} = throw(ArgumentError("`setindex!` with IndexLinear `$i` is not supported for `PaddedView`. You may convert it to `CartesianIndex` first."))
 
 """
     Aspad = paddedviews(fillvalue, A1, A2, ....)

@@ -252,12 +252,15 @@ end
     end
 end
 
-@testset "setindex!" begin
+@testset "getindex/setindex!" begin
     @testset "1d" begin
         A = collect(1:3)
         Ap = PaddedView(missing, A, (0:4, ))
         @test axes(Ap) == (0:4,)
         @test ismissing(Ap[0])
+        @test ismissing(first(Ap))
+        @test ismissing(last(Ap))
+        @test Ap[1] == 1
         @test_throws BoundsError Ap[0] = 1
         Ap[1] = 10
         @test Ap[1] == 10
@@ -271,7 +274,7 @@ end
         A = collect(1:3)
         Ap = PaddedView(missing, OffsetArray(A, -1), (0:4, ))
         @test axes(Ap) == (0:4, )
-        @test Ap[0] === 1
+        @test first(Ap) == Ap[0] === 1
         @test ismissing(Ap[4])
         Ap[0] = 10
         @test Ap[0] == 10
@@ -283,8 +286,8 @@ end
         Ap = PaddedView(missing, A, (0:4, 0:4))
         @test axes(Ap) == (0:4, 0:4)
         @test ismissing(Ap[0, 0])
-        err = ArgumentError("`setindex!` with IndexLinear `7` is not supported for `PaddedView`. You may convert it to `CartesianIndex` first.")
-        @test_throws err Ap[7] = 10
+        @test ismissing(Ap[2])
+        @test Ap[7] == 1
         Ap[1, 1] = 10
         @test Ap[7] == Ap[1, 1] == 10
 
@@ -299,6 +302,7 @@ end
         @test axes(Ap) == (0:4, 0:4)
         @test Ap[0, 0] === 1
         @test ismissing(Ap[4, 4])
+        @test Ap[6] == 3
         Ap[0, 0] = 10
         @test Ap[0, 0] == 10
         @test_throws BoundsError Ap[4, 4] = 1
