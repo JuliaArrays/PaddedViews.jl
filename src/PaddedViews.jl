@@ -174,10 +174,8 @@ Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vara
         _throw_argument_error() = throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
         _throw_bounds_error(A, i) = throw(BoundsError(A, i))
 
-        in_data_bounds = checkbounds(Bool, A.data, i...)
-        in_padding_bounds = checkbounds(Bool, A, i...)
-        if in_padding_bounds
-            in_data_bounds || _throw_argument_error()
+        if checkbounds(Bool, A, i...)
+            checkbounds(Bool, A.data, i...) || _throw_argument_error()
         else
             _throw_bounds_error(A, i)
         end
