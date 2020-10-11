@@ -168,13 +168,15 @@ Base.parent(A::PaddedView) = A.data
     return A.fillvalue
 end
 
-function Base.setindex!(A::PaddedView{T, N}, v, i::Vararg{Int, N}) where {T, N}
-    in_data_bounds = checkbounds(Bool, A.data, i...)
-    in_padding_bounds = checkbounds(Bool, A, i...)
-    if in_padding_bounds && !in_data_bounds
-        throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
-    elseif !in_padding_bounds
-        throw(BoundsError(A, i))
+Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vararg{Int, N}) where {T, N}
+    @boundscheck begin
+        in_data_bounds = checkbounds(Bool, A.data, i...)
+        in_padding_bounds = checkbounds(Bool, A, i...)
+        if in_padding_bounds && !in_data_bounds
+            throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
+        elseif !in_padding_bounds
+            throw(BoundsError(A, i))
+        end
     end
 
     setindex!(A.data, v, i...)
