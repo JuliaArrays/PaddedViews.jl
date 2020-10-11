@@ -264,6 +264,10 @@ end
         @test_throws ArgumentError Ap[0] = 1
         Ap[1] = 10
         @test Ap[1] == 10
+        
+        # test setindex! result
+        @test setindex!(Ap, 20, 1) === Ap
+        @test 10 === (Ap[1] = 10)
 
         A = collect(1:3)
         Ap = PaddedView(missing, A, (4:6, ))

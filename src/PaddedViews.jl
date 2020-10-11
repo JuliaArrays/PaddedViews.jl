@@ -182,6 +182,7 @@ Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vara
     end
 
     setindex!(A.data, v, i...)
+    return A
 end
 
 """
