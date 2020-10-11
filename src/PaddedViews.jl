@@ -170,12 +170,16 @@ end
 
 Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vararg{Int, N}) where {T, N}
     @boundscheck begin
+        # This gives some performance boost https://github.com/JuliaLang/julia/issues/33273
+        _throw_argument_error() = throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
+        _throw_bounds_error(A, i) = throw(BoundsError(A, i))
+
         in_data_bounds = checkbounds(Bool, A.data, i...)
         in_padding_bounds = checkbounds(Bool, A, i...)
-        if in_padding_bounds && !in_data_bounds
-            throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
-        elseif !in_padding_bounds
-            throw(BoundsError(A, i))
+        if in_padding_bounds
+            in_data_bounds || _throw_argument_error()
+        else
+            _throw_bounds_error(A, i)
         end
     end
 
