@@ -160,7 +160,7 @@ Base.size(A::PaddedView) = map(length, axes(A))
 
 Base.parent(A::PaddedView) = A.data
 
-Base.@propagate_inbounds function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N})::T where {T,N}
+Base.@propagate_inbounds function Base.getindex(A::PaddedView{T,N}, i::Vararg{Int,N}) where {T,N}
     @boundscheck checkbounds(A, i...)
     if Base.checkbounds(Bool, A.data, i...)
         return convert(T, A.data[i...])
