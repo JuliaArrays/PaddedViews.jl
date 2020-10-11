@@ -17,6 +17,7 @@ end
     for n = 0:5
         a = @inferred(PaddedView(0, ones(Int,ntuple(d->1,n)), ntuple(x->x+1,n)))
         @test axes(a) == ntuple(x->1:x+1,n)
+        @test axes(a, ndims(a)+1) == Base.OneTo(1)
         @test @inferred(a[1]) == 1
         n > 0 && @test @inferred(a[2]) == 0
         @test @inferred(a[ntuple(x->1,n)...]) == 1
@@ -113,6 +114,13 @@ end
 end
 
 @testset "paddedviews" begin
+    @testset "0-d array" begin
+        a = reshape([1])
+        pa, pb = paddedviews(-1, a, a)
+        @test pa === pb
+        @test pa == a
+    end
+
     a1 = reshape([1,2], 2, 1)
     a2 = [1.0,2.0]'
     a1p, a2p = @inferred(paddedviews(0, a1, a2))
@@ -142,6 +150,13 @@ end
 end
 
 @testset "sym_paddedviews" begin
+    @testset "0-d array" begin
+        a = reshape([1])
+        pa, pb = sym_paddedviews(-1, a, a)
+        @test pa === pb
+        @test pa == a
+    end
+
     # even case
     a1 = reshape([1,2], 2, 1)
     a2 = [1.0,2.0]'

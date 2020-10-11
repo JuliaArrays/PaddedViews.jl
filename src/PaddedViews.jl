@@ -154,6 +154,7 @@ end
 Base.axes(A::PaddedView) = A.indices
 @inline Base.axes(A::PaddedView, d::Integer) = d <= ndims(A) ? A.indices[d] : default_axes(A.indices)
 default_axes(::NTuple{N,I}) where {N,I<:AbstractUnitRange} = convert(I, OneTo(1))
+default_axes(::Tuple{}) = OneTo(1)
 default_axes(::Any) = OneTo(1)
 
 Base.size(A::PaddedView) = map(length, axes(A))
@@ -224,20 +225,21 @@ paddedviews(fillvalue) = ()
 
 @inline outerinds(A::AbstractArray, Bs...) = _outerinds(axes(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
-    _outerinds(_outerinds(inds, axes(A)), Bs...)
+    _outerinds(__outerinds(inds, axes(A)), Bs...)
 _outerinds(inds) = inds
-@inline _outerinds(inds1::NTuple{N,I}, inds2::NTuple{N,I}) where {N,I<:AbstractUnitRange} =
-    map((i1, i2) -> convert(I, padrange(i1, i2)), inds1, inds2)
-_outerinds(inds1::NTuple{N,AbstractUnitRange}, inds2::NTuple{N,AbstractUnitRange}) where {N} =
-    map((i1, i2) -> convert(UnitRange{Int}, padrange(i1, i2)), inds1, inds2)
+@inline function __outerinds(inds1::NTuple{N,I}, inds2) where {N,I<:AbstractUnitRange}
+    map((i1, i2) -> padrange(i1, i2), inds1, inds2)
+end
 
 # This shouldn't be reached due to the `paddedviews(fillvalue)` method above,
 # but it's here in case anyone extends `paddedviews` for types other than AbstractArrays.
 # See https://github.com/JuliaImages/ImageCore.jl/pull/32#discussion_r111545756
 outerinds() = error("must supply at least one array with concrete axes")
 
-padrange(i1::OneTo, i2::OneTo) = OneTo(max(last(i1), last(i2)))
-padrange(i1::AbstractUnitRange, i2::AbstractUnitRange) = min(first(i1),first(i2)):max(last(i1), last(i2))
+padrange(i1::T, i2::T) where T<: OneTo = OneTo(max(last(i1), last(i2)))
+padrange(i1::T, i2::T) where T<: AbstractUnitRange = convert(T, min(first(i1),first(i2)):max(last(i1), last(i2)))
+padrange(i1::AbstractRange, i2::AbstractRange) = padrange(convert(UnitRange{Int}, i1), convert(UnitRange{Int}, i2))
+
 
 
 """
