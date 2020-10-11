@@ -261,7 +261,7 @@ end
         @test ismissing(first(Ap))
         @test ismissing(last(Ap))
         @test Ap[1] == 1
-        @test_throws BoundsError Ap[0] = 1
+        @test_throws ArgumentError Ap[0] = 1
         Ap[1] = 10
         @test Ap[1] == 10
 
@@ -269,7 +269,7 @@ end
         Ap = PaddedView(missing, A, (4:6, ))
         @test axes(Ap) == (4:6, )
         @test all(ismissing, Ap)
-        @test_throws BoundsError Ap[1] = 1 # still throw a BoundsError
+        @test_throws BoundsError Ap[1] = 1
 
         A = collect(1:3)
         Ap = PaddedView(missing, OffsetArray(A, -1), (0:4, ))
@@ -278,7 +278,7 @@ end
         @test ismissing(Ap[4])
         Ap[0] = 10
         @test Ap[0] == 10
-        @test_throws BoundsError Ap[4] = 1
+        @test_throws ArgumentError Ap[4] = 1
     end
 
     @testset "2d" begin
@@ -305,6 +305,6 @@ end
         @test Ap[6] == 3
         Ap[0, 0] = 10
         @test Ap[0, 0] == 10
-        @test_throws BoundsError Ap[4, 4] = 1
+        @test_throws ArgumentError Ap[4, 4] = 1
     end
 end
