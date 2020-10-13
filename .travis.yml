@@ -13,6 +13,9 @@ notifications:
   email: false
 codecov: true
 # uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("PaddedViews"); Pkg.test("PaddedViews"; coverage=true)'
+# Pkg.test set `bounds-check=yes`, which skips the inbounds behavior test
+# Here we add one more process to test inbounds behavior
+script:
+ - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+ - julia -e 'Pkg.clone(pwd()); Pkg.build("PaddedViews"); Pkg.test("PaddedViews"; coverage=true)'
+ - julia --project=. test/runtests.jl
