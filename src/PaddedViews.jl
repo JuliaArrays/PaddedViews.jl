@@ -188,7 +188,7 @@ end
 
 Base.@propagate_inbounds function Base.setindex!(A::PaddedView, v, i::Int)
     # delay the boundscheck in the IndexCartesian version and not set @inbounds meta here
-    setindex!(A, v, Base._to_subscript_indices(A, i...)...)
+    setindex!(A, v, Base._to_subscript_indices(A, i)...)
 end
 
 """
