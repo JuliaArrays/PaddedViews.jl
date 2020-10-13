@@ -186,6 +186,11 @@ Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vara
     return A
 end
 
+Base.@propagate_inbounds function Base.setindex!(A::PaddedView, v, i::Int)
+    # delay the boundscheck in the IndexCartesian version and not set @inbounds meta here
+    setindex!(A, v, Base._to_subscript_indices(A, i...)...)
+end
+
 """
     Aspad = paddedviews(fillvalue, A1, A2, ....)
 

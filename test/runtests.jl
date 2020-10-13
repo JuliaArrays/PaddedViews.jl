@@ -310,6 +310,9 @@ end
         Ap[1, 1] = 10
         @test Ap[7] == Ap[1, 1] == 10
 
+        err = ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first.")
+        @test_throws err setindex!(Ap, 10, 1)
+
         A = reshape(collect(1:6), 2, 3)
         Ap = PaddedView(missing, A, (3:4, 4:6))
         @test axes(Ap) == (3:4, 4:6)
