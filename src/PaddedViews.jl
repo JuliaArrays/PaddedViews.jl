@@ -169,23 +169,6 @@ Base.@propagate_inbounds function Base.getindex(A::PaddedView{T,N}, i::Vararg{In
     return A.fillvalue
 end
 
-Base.@propagate_inbounds function Base.setindex!(A::PaddedView{T, N}, v, i::Vararg{Int, N}) where {T, N}
-    @boundscheck begin
-        # This gives some performance boost https://github.com/JuliaLang/julia/issues/33273
-        _throw_argument_error() = throw(ArgumentError("PaddedViews do not support (re)setting the padding value. Consider making a copy of the array first."))
-        _throw_bounds_error(A, i) = throw(BoundsError(A, i))
-
-        if checkbounds(Bool, A, i...)
-            checkbounds(Bool, A.data, i...) || _throw_argument_error()
-        else
-            _throw_bounds_error(A, i)
-        end
-    end
-
-    setindex!(A.data, v, i...)
-    return A
-end
-
 """
     Aspad = paddedviews(fillvalue, A1, A2, ....)
 
