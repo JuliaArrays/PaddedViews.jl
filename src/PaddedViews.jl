@@ -97,14 +97,14 @@ function PaddedView(fillvalue::FT, data::AbstractArray{T}, args...) where {FT, T
 end
 
 function PaddedView{FT}(fillvalue,
-                    data::AbstractArray{T,N},
-                    indices) where {FT,T,N}
+                        data::AbstractArray{T,N},
+                        indices) where {FT,T,N}
     PaddedView{FT,N,typeof(indices),typeof(data)}(convert(FT, fillvalue), data, indices)
 end
 
 function PaddedView{FT}(fillvalue,
-                    data::AbstractArray{T,N},
-                    sz::Tuple{Integer,Vararg{Integer}}) where {FT,T,N}
+                        data::AbstractArray{T,N},
+                        sz::Tuple{Integer,Vararg{Integer}}) where {FT,T,N}
     inds = map(OneTo, sz)
     PaddedView{FT,N,typeof(inds),typeof(data)}(convert(FT, fillvalue), data, inds)
 end
@@ -128,24 +128,24 @@ filltype(::Type{FT}, ::Type{T}) where {FT<:Union{Nothing, Missing}, T<:Union{Not
 
 # This method eliminates an ambiguity between the two below it
 function PaddedView{FT}(fillvalue,
-                    data::AbstractArray{T,0},
-                    ::Tuple{},
-                    ::Tuple{}) where {FT,T}
+                        data::AbstractArray{T,0},
+                        ::Tuple{},
+                        ::Tuple{}) where {FT,T}
     return PaddedView{FT}(fillvalue, data, ())
 end
 
 function PaddedView{FT}(fillvalue,
-                    data::AbstractArray{T,N},
-                    padded_inds::NTuple{N,AbstractUnitRange},
-                    data_inds::NTuple{N,AbstractUnitRange}) where {FT,T,N}
+                        data::AbstractArray{T,N},
+                        padded_inds::NTuple{N,AbstractUnitRange},
+                        data_inds::NTuple{N,AbstractUnitRange}) where {FT,T,N}
     off_data = OffsetArray(data, data_inds...)
     return PaddedView{FT}(fillvalue, off_data, padded_inds)
 end
 
 function PaddedView{FT}(fillvalue,
-                    data::AbstractArray{T,N},
-                    sz::NTuple{N,Integer},
-                    first_datum::NTuple{N,Integer}) where {FT,T,N}
+                        data::AbstractArray{T,N},
+                        sz::NTuple{N,Integer},
+                        first_datum::NTuple{N,Integer}) where {FT,T,N}
     padded_inds = map(OneTo, sz)
     data_inds   = map((ax, o)->ax.+o, axes(data), first_datum .- 1)
     return PaddedView{FT}(fillvalue, data, padded_inds, data_inds)
@@ -221,7 +221,14 @@ function paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
     map(A->PaddedView(fillvalue, A, inds), As)
 end
+# Zero, one, and two arrays are common, improve inferrability
 paddedviews(fillvalue) = ()
+paddedviews(fillvalue, A1::AbstractArray) = (A1,)
+function paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
+    inds = outerinds(A1, A2)
+    PaddedView(fillvalue, A1, inds), PaddedView(fillvalue, A2, inds)
+end
+
 
 @inline outerinds(A::AbstractArray, Bs...) = _outerinds(axes(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
@@ -290,9 +297,16 @@ julia> a1p[CartesianIndices(a1)]
 """
 function sym_paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
-    map((A, A_axes)->PaddedView(fillvalue, A, _sym_pad_inds(A_axes, inds)), As, axes.(As))
+    map(As) do A
+        PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds))
+    end
 end
 sym_paddedviews(fillvalue) = ()
+sym_paddedviews(fillvalue, A::AbstractArray) = (A,)
+function sym_paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
+    inds = outerinds(A1, A2)
+    PaddedView(fillvalue, A1, _sym_pad_inds(axes(A1), inds)), PaddedView(fillvalue, A2, _sym_pad_inds(axes(A2), inds))
+end
 
 function _sym_pad_inds(A_axes, inds)
     map(A_axes, inds) do ax, i
