@@ -119,6 +119,9 @@ end
         pa, pb = paddedviews(-1, a, a)
         @test pa === pb
         @test pa == a
+
+        pa = PaddedView{Int}(-1, a, (), ())
+        @test pa == a
     end
 
     a1 = reshape([1,2], 2, 1)
@@ -131,6 +134,12 @@ end
     @test eltype(a1p) == Int
     @test eltype(a2p) == Float64
     @test axes(a1p) === axes(a2p) === (Base.OneTo(2), Base.OneTo(2))
+    a1p, a2p, a3p = @inferred(paddedviews(0, a1, a2, a1))
+    @test a1p == a3p == [1 0; 2 0]
+    @test a2p == [1.0 2.0; 0.0 0.0]
+    a1p, a2p = PaddedViews.paddedviews_itr(0, [a1, a2])
+    @test a1p == [1 0; 2 0]
+    @test a2p == [1.0 2.0; 0.0 0.0]
 
     a3 = OffsetArray([1.0,2.0]', (0,-1))
     a1p, a3p = @inferred(paddedviews(0, a1, a3))
@@ -173,6 +182,8 @@ end
     a2 = [1.0,2.0,3.0]'
     a1p, a2p = @inferred(sym_paddedviews(0, a1, a2))
 
+    @test @inferred(sym_paddedviews(0, a1)) == (a1,)
+
     @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
     @test a1p[CartesianIndices(a1)] == a1
     @test a2p == OffsetArray([0.0 0.0 0.0; 1.0 2.0 3.0; 0.0 0.0 0.0], (0:2, 1:3))
@@ -181,6 +192,10 @@ end
     @test eltype(a2p) == Float64
     @test axes(a1p) === (1:3, 0:2)
     @test axes(a2p) === (0:2, 1:3)
+
+    a1p, a2p, a3p = @inferred(sym_paddedviews(0, a1, a2, a1))
+    @test a1p == a3p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
+    @test a2p == OffsetArray([0.0 0.0 0.0; 1.0 2.0 3.0; 0.0 0.0 0.0], (0:2, 1:3))
 
     a3 = OffsetArray([1.0,2.0,3.0]', (0,-1))
     a1p, a3p = @inferred(sym_paddedviews(0, a1, a3))
@@ -195,6 +210,10 @@ end
     @test axes(a3p) == (0:2, 0:2)
 
     @test @inferred(sym_paddedviews(3)) == ()
+
+    a1p, a2p = @inferred(PaddedViews.sym_paddedviews_itr(0, Matrix{Int}[a1, a2]))
+    @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
+    @test a2p == OffsetArray([0 0 0; 1 2 3; 0 0 0], (0:2, 1:3))
 end
 
 @testset "showarg" begin

@@ -223,12 +223,18 @@ function paddedviews(fillvalue, As::AbstractArray...)
 end
 # Zero, one, and two arrays are common, improve inferrability
 paddedviews(fillvalue) = ()
-paddedviews(fillvalue, A1::AbstractArray) = (A1,)
+paddedviews(fillvalue, A1::AbstractArray) = (PaddedView(fillvalue, A1, outerinds(A1)),)
 function paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
     inds = outerinds(A1, A2)
     PaddedView(fillvalue, A1, inds), PaddedView(fillvalue, A2, inds)
 end
 
+# This is an (unexported) optimization if you're supplying the arrays from a vector.
+# MosaicViews uses this.
+function paddedviews_itr(fillvalue, itr)
+    inds = outerinds(itr...)
+    [PaddedView(fillvalue, A, inds) for A in itr]
+end
 
 @inline outerinds(A::AbstractArray, Bs...) = _outerinds(axes(A), Bs...)
 @inline _outerinds(inds, A::AbstractArray, Bs...) =
@@ -302,10 +308,15 @@ function sym_paddedviews(fillvalue, As::AbstractArray...)
     end
 end
 sym_paddedviews(fillvalue) = ()
-sym_paddedviews(fillvalue, A::AbstractArray) = (A,)
+sym_paddedviews(fillvalue, A::AbstractArray) = (PaddedView(fillvalue, A, _sym_pad_inds(axes(A), outerinds(A))),)
 function sym_paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
     inds = outerinds(A1, A2)
     PaddedView(fillvalue, A1, _sym_pad_inds(axes(A1), inds)), PaddedView(fillvalue, A2, _sym_pad_inds(axes(A2), inds))
+end
+
+function sym_paddedviews_itr(fillvalue, itr)
+    inds = outerinds(itr...)
+    [PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds)) for A in itr]
 end
 
 function _sym_pad_inds(A_axes, inds)
