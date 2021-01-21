@@ -96,6 +96,13 @@ function PaddedView(fillvalue::FT, data::AbstractArray{T}, args...) where {FT, T
     PaddedView{filltype(FT, T)}(fillvalue, data, args...)
 end
 
+function PaddedView(fillvalue::FT,
+                    data::AbstractArray{T,N},
+                    padded_inds::NTuple{N,AbstractUnitRange},
+                    data_inds::NTuple{N,AbstractUnitRange}) where {FT,T,N}
+    PaddedView{filltype(FT, T)}(fillvalue, data, padded_inds, data_inds)
+end
+
 function PaddedView{FT}(fillvalue,
                         data::AbstractArray{T,N},
                         indices) where {FT,T,N}
