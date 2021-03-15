@@ -226,7 +226,23 @@ julia> a1p[CartesianIndices(a1)]
 """
 function paddedviews(fillvalue, As::AbstractArray...)
     inds = outerinds(As...)
-    map(A->PaddedView(fillvalue, A, inds), As)
+    dims1 = 1
+    dims2 = (1,2)
+    dims3 = 1:2
+    map(A->PaddedView(fillvalue, A, _extended_axes(A, inds, dims3)), As)
+end
+_extended_axes(A, inds, ::Nothing) = inds
+function _extended_axes(A, inds, dims::Int)
+	map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, ntuple(i->i==dims, ndims(A)))
+end
+function _extended_axes(A, inds, dims::Tuple)
+	map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, (1,2).==dims)
+end
+function _extended_axes(A, inds, dims::UnitRange{Int64})
+    if(dims[2]==2)
+        return  map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, (1,2).==(dims[1],dims[2]) )
+    end
+    return inds
 end
 # Zero, one, and two arrays are common, improve inferrability
 paddedviews(fillvalue) = ()
