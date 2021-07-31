@@ -237,7 +237,7 @@ function _extended_axes(A, inds, dims::Tuple)
 	map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, ntuple(i->i in collect(dims), ndims(A)))
 end
 function _extended_axes(A, inds, dims::UnitRange{Int64})
-    return map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, ntuple(i->i in collect(dims), ndims(A)))
+    map((r1, r2, d)->d ? r2 : r1 , axes(A), inds, ntuple(i->i in collect(dims), ndims(A)))
 end
 
 # Zero, one, and two arrays are common, improve inferrability

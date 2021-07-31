@@ -141,6 +141,48 @@ end
     @test a1p == [1 0; 2 0]
     @test a2p == [1.0 2.0; 0.0 0.0]
 
+
+    a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
+    a2 = [4 5;6 7]
+    a2b = [4 5 -1; 6 7 -1; -1 -1 -1]
+    a2c = [4 5; 6 7; -1 -1]
+    a2r = [4 5 -1; 6 7 -1]
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1))
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(2))
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(3))
+    @test a2f == a2
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1,2))
+    @test a2f == a2b
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(2,3))
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1,2,3))
+    @test a2f == a2b
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1)
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=2)
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=3)
+    @test a2f == a2
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:0)
+    @test a2f == a2
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:1)
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:2)
+    @test a2f == a2b
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:3)
+    @test a2f == a2b
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=2:3)
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=3:4)
+    @test a2f == a2
+
     a3 = OffsetArray([1.0,2.0]', (0,-1))
     a1p, a3p = @inferred(paddedviews(0, a1, a3))
     @test a1p == OffsetArray([0 1; 0 2], 1:2, 0:1)
