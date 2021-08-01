@@ -141,7 +141,24 @@ end
     @test a1p == [1 0; 2 0]
     @test a2p == [1.0 2.0; 0.0 0.0]
 
+    a3 = OffsetArray([1.0,2.0]', (0,-1))
+    a1p, a3p = @inferred(paddedviews(0, a1, a3))
+    @test a1p == OffsetArray([0 1; 0 2], 1:2, 0:1)
+    @test a1p[CartesianIndices(a1)] == a1
+    @test a3p == OffsetArray([1.0 2.0; 0.0 0.0], 1:2, 0:1)
+    @test a3p[CartesianIndices(a3)] == a3
+    @test eltype(a1p) == Int
+    @test eltype(a3p) == Float64
+    @test axes(a1p) === axes(a3p) === (1:2, 0:1)
 
+    @test @inferred(paddedviews(3)) == ()
+    @test_throws ErrorException PaddedViews.outerinds()
+    # But a zero-dimensional input should not trigger that error
+    a = reshape([5])
+    @test paddedviews(-1, a) == (a,)
+
+
+    # paddedviews
     a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
     a2 = [4 5;6 7]
     a2b = [4 5 -1; 6 7 -1; -1 -1 -1]
@@ -183,21 +200,52 @@ end
     a1f, a2f = paddedviews(-1, a1, a2;dims=3:4)
     @test a2f == a2
 
-    a3 = OffsetArray([1.0,2.0]', (0,-1))
-    a1p, a3p = @inferred(paddedviews(0, a1, a3))
-    @test a1p == OffsetArray([0 1; 0 2], 1:2, 0:1)
-    @test a1p[CartesianIndices(a1)] == a1
-    @test a3p == OffsetArray([1.0 2.0; 0.0 0.0], 1:2, 0:1)
-    @test a3p[CartesianIndices(a3)] == a3
-    @test eltype(a1p) == Int
-    @test eltype(a3p) == Float64
-    @test axes(a1p) === axes(a3p) === (1:2, 0:1)
+    # sys_paddedviews cases
+    a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
+    a2 = reshape([5, 6], 2, 1)
+    a2b = [-1 5 -1; -1 6 -1; -1 -1 -1]
+    a2c = reshape([5, 6, -1], 3, 1)
+    a2r =  [-1 5 -1; -1 6 -1]
 
-    @test @inferred(paddedviews(3)) == ()
-    @test_throws ErrorException PaddedViews.outerinds()
-    # But a zero-dimensional input should not trigger that error
-    a = reshape([5])
-    @test paddedviews(-1, a) == (a,)
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1))
+    @test a2f == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(2))
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(3))
+    @test a2f == a2
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1,2))
+    @test collect(a2f) == a2b
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(2,3))
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1,2,3))
+    @test collect(a2f) == a2b
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1)
+    @test collect(a2f) == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=2)
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=3)
+    @test collect(a2f)  == a2
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:0)
+    @test collect(a2f)  == a2
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:1)
+    @test collect(a2f)  == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:2)
+    @test collect(a2f)  == a2b
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:3)
+    @test collect(a2f)  == a2b
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=2:3)
+    @test collect(a2f)  == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=3:4)
+    @test collect(a2f)  == a2
+
+
+
+
+
 end
 
 @testset "sym_paddedviews" begin

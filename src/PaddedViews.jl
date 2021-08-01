@@ -320,25 +320,27 @@ julia> a1p[CartesianIndices(a1)]
  3
  ```
 """
-function sym_paddedviews(fillvalue, As::AbstractArray...)
+function sym_paddedviews(fillvalue, As::AbstractArray...; dims=1:ndims(first(As)))
     inds = outerinds(As...)
     map(As) do A
-        PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds))
+        PaddedView(fillvalue, A, _sym_pad_inds(A, inds, dims))
     end
 end
 sym_paddedviews(fillvalue) = ()
-sym_paddedviews(fillvalue, A::AbstractArray) = (PaddedView(fillvalue, A, _sym_pad_inds(axes(A), outerinds(A))),)
+sym_paddedviews(fillvalue, A::AbstractArray) = (PaddedView(fillvalue, A, _sym_pad_inds(A, outerinds(A))),)
 function sym_paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
     inds = outerinds(A1, A2)
-    PaddedView(fillvalue, A1, _sym_pad_inds(axes(A1), inds)), PaddedView(fillvalue, A2, _sym_pad_inds(axes(A2), inds))
+    PaddedView(fillvalue, A1, _sym_pad_inds(A1, inds)), PaddedView(fillvalue, A2, _sym_pad_inds(A2, inds))
 end
 
 function sym_paddedviews_itr(fillvalue, itr)
     inds = outerinds(itr...)
-    [PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds)) for A in itr]
+    [PaddedView(fillvalue, A, _sym_pad_inds(A, inds)) for A in itr]
 end
 
-function _sym_pad_inds(A_axes, inds)
+function _sym_pad_inds(A, inds, dims=1:ndims(A))
+    inds = _extended_axes(A, inds, dims)
+    A_axes = axes(A)
     map(A_axes, inds) do ax, i
         pad_sz = length(i) - length(ax)
         offset = pad_sz ÷ 2
