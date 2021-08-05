@@ -177,14 +177,14 @@ Base.@propagate_inbounds function Base.getindex(A::PaddedView{T,N}, i::Vararg{In
 end
 
 """
-    Aspad = paddedviews(fillvalue, A1, A2, ....)
+    Aspad = paddedviews(fillvalue, A1, A2, ...; [dims])
 
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes,
 chosen as the span of axes enclosing all of the input arrays.
 
-The padding is applied to one direction. For example, values are filled to bottom-right part
-of the new array in two-dimensional case. Use [`sym_paddedviews`](@ref) if _both_ directions
-need to be padded.
+The padding is applied to one direction in dimensions `dims`. For example, values are filled to
+bottom-right part of the new array in two-dimensional case. Use [`sym_paddedviews`](@ref) if
+_both_ directions need to be padded.
 
 The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
 that `Ap[CartesianIndices(A)] == A`.
@@ -223,11 +223,54 @@ julia> a1p[CartesianIndices(a1)]
  2
  3
 ```
+
+`dims` keyword allows padding only for specified dimensions.
+
+```jldoctest; setup=:(using PaddedViews)
+julia> a1 = reshape(collect(1:9), 3, 3)
+3×3 $(Matrix{Int}):
+ 1  4  7
+ 2  5  8
+ 3  6  9
+
+julia> a2 = [4 5;6 7]
+2×2 $(Matrix{Int}):
+ 4  5
+ 6  7
+
+julia> a1f, a2f = paddedviews(-1, a1, a2; dims=1);
+
+julia> a2f
+3×2 PaddedView(-1, ::$(Matrix{Int}), (Base.OneTo(3), Base.OneTo(2))) with eltype $(Int):
+  4   5
+  6   7
+ -1  -1
+
+julia> a1f, a2f = paddedviews(-1, a1, a2; dims=(1,2));
+
+julia> a2f
+3×3 PaddedView(-1, ::$(Matrix{Int}), (Base.OneTo(3), Base.OneTo(3))) with eltype $(Int):
+  4   5  -1
+  6   7  -1
+ -1  -1  -1
+```
 """
-function paddedviews(fillvalue, As::AbstractArray...)
+
+function paddedviews(fillvalue,  As::AbstractArray...; dims=1:ndims(first(As)))
     inds = outerinds(As...)
-    map(A->PaddedView(fillvalue, A, inds), As)
+    map(A->PaddedView(fillvalue, A, _extended_axes(A, inds, dims)), As)
 end
+_extended_axes(A, inds, ::Nothing) = inds
+function _extended_axes(A, inds, dims::Int)
+    map((r1, r2, d)->d ? r2 : r1, axes(A), inds, ntuple(i->i==dims, ndims(A)))
+end
+function _extended_axes(A, inds, dims::Tuple)
+    map((r1, r2, d)->d ? r2 : r1, axes(A), inds, ntuple(i->i in collect(dims), ndims(A)))
+end
+function _extended_axes(A, inds, dims::UnitRange{Int64})
+    map((r1, r2, d)->d ? r2 : r1, axes(A), inds, ntuple(i->i in collect(dims), ndims(A)))
+end
+
 # Zero, one, and two arrays are common, improve inferrability
 paddedviews(fillvalue) = ()
 paddedviews(fillvalue, A1::AbstractArray) = (PaddedView(fillvalue, A1, outerinds(A1)),)
@@ -263,13 +306,14 @@ padrange(i1::AbstractRange, i2::AbstractRange) = padrange(convert(UnitRange{Int}
 
 
 """
-    Aspad = sym_paddedviews(fillvalue, A1, A2, ....)
+    Aspad = sym_paddedviews(fillvalue, A1, A2, ...; [dims])
 
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes, chosen as the span of axes
 enclosing all of the input arrays.
 
-The padding is applied to both directions, which means original array located at the center
-the padded result. Use [`paddedviews`](@ref) if only one direction need to be padded.
+The padding is applied to both directions in dimensions `dims`, which means original array
+located at the center the padded result. Use [`paddedviews`](@ref) if only one direction
+need to be padded.
 
 The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
 that `Ap[CartesianIndices(A)] == A`.
@@ -306,27 +350,61 @@ julia> a1p[CartesianIndices(a1)]
  1
  2
  3
+```
+
+`dims` keyword allows padding only for specified dimensions.
+
+```jldoctest; setup=:(using PaddedViews)
+julia> a1 = reshape(collect(1:9), 3, 3)
+ 3×3 $(Matrix{Int}):
+  1  4  7
+  2  5  8
+  3  6  9
+
+julia> a2 = reshape([5, 6], 2, 1)
+ 2×1 $(Matrix{Int}):
+  5
+  6
+
+julia> a1f, a2f = sym_paddedviews(-1, a1, a2; dims=1);
+
+julia> a2f
+ 3×1 PaddedView(-1, ::$(Matrix{Int}), (1:3, 1:1)) with eltype $(Int) with indices 1:3×1:1:
+   5
+   6
+  -1
+
+julia> a1f, a2f = sym_paddedviews(-1, a1, a2; dims=(1,2));
+
+julia> a2f
+ 3×3 PaddedView(-1, ::$(Matrix{Int}), (1:3, 0:2)) with eltype $(Int) with indices 1:3×0:2:
+  -1   5  -1
+  -1   6  -1
+  -1  -1  -1
  ```
 """
-function sym_paddedviews(fillvalue, As::AbstractArray...)
+
+function sym_paddedviews(fillvalue, As::AbstractArray...; dims=1:ndims(first(As)))
     inds = outerinds(As...)
     map(As) do A
-        PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds))
+        PaddedView(fillvalue, A, _sym_pad_inds(A, inds, dims))
     end
 end
 sym_paddedviews(fillvalue) = ()
-sym_paddedviews(fillvalue, A::AbstractArray) = (PaddedView(fillvalue, A, _sym_pad_inds(axes(A), outerinds(A))),)
+sym_paddedviews(fillvalue, A::AbstractArray) = (PaddedView(fillvalue, A, _sym_pad_inds(A, outerinds(A))),)
 function sym_paddedviews(fillvalue, A1::AbstractArray, A2::AbstractArray)
     inds = outerinds(A1, A2)
-    PaddedView(fillvalue, A1, _sym_pad_inds(axes(A1), inds)), PaddedView(fillvalue, A2, _sym_pad_inds(axes(A2), inds))
+    PaddedView(fillvalue, A1, _sym_pad_inds(A1, inds)), PaddedView(fillvalue, A2, _sym_pad_inds(A2, inds))
 end
 
 function sym_paddedviews_itr(fillvalue, itr)
     inds = outerinds(itr...)
-    [PaddedView(fillvalue, A, _sym_pad_inds(axes(A), inds)) for A in itr]
+    [PaddedView(fillvalue, A, _sym_pad_inds(A, inds)) for A in itr]
 end
 
-function _sym_pad_inds(A_axes, inds)
+function _sym_pad_inds(A, inds, dims=1:ndims(A))
+    inds = _extended_axes(A, inds, dims)
+    A_axes = axes(A)
     map(A_axes, inds) do ax, i
         pad_sz = length(i) - length(ax)
         offset = pad_sz ÷ 2

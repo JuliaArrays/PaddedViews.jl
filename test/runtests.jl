@@ -156,6 +156,49 @@ end
     # But a zero-dimensional input should not trigger that error
     a = reshape([5])
     @test paddedviews(-1, a) == (a,)
+
+
+    # paddedviews
+    a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
+    a2 = [4 5;6 7]
+    a2b = [4 5 -1; 6 7 -1; -1 -1 -1]
+    a2c = [4 5; 6 7; -1 -1]
+    a2r = [4 5 -1; 6 7 -1]
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1))
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(2))
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(3))
+    @test a2f == a2
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1,2))
+    @test a2f == a2b
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(2,3))
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=(1,2,3))
+    @test a2f == a2b
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1)
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=2)
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=3)
+    @test a2f == a2
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:0)
+    @test a2f == a2
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:1)
+    @test a2f == a2c
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:2)
+    @test a2f == a2b
+    a1f, a2f = paddedviews(-1, a1, a2;dims=1:3)
+    @test a2f == a2b
+
+    a1f, a2f = paddedviews(-1, a1, a2;dims=2:3)
+    @test a2f == a2r
+    a1f, a2f = paddedviews(-1, a1, a2;dims=3:4)
+    @test a2f == a2
 end
 
 @testset "sym_paddedviews" begin
@@ -214,6 +257,48 @@ end
     a1p, a2p = @inferred(PaddedViews.sym_paddedviews_itr(0, Matrix{Int}[a1, a2]))
     @test a1p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
     @test a2p == OffsetArray([0 0 0; 1 2 3; 0 0 0], (0:2, 1:3))
+
+    # sys_paddedviews cases
+    a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
+    a2 = reshape([5, 6], 2, 1)
+    a2b = [-1 5 -1; -1 6 -1; -1 -1 -1]
+    a2c = reshape([5, 6, -1], 3, 1)
+    a2r =  [-1 5 -1; -1 6 -1]
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1))
+    @test a2f == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(2))
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(3))
+    @test a2f == a2
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1,2))
+    @test collect(a2f) == a2b
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(2,3))
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1,2,3))
+    @test collect(a2f) == a2b
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1)
+    @test collect(a2f) == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=2)
+    @test collect(a2f) == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=3)
+    @test collect(a2f)  == a2
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:0)
+    @test collect(a2f)  == a2
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:1)
+    @test collect(a2f)  == a2c
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:2)
+    @test collect(a2f)  == a2b
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=1:3)
+    @test collect(a2f)  == a2b
+
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=2:3)
+    @test collect(a2f)  == a2r
+    a1f, a2f = sym_paddedviews(-1, a1, a2;dims=3:4)
+    @test collect(a2f)  == a2
 end
 
 @testset "showarg" begin
