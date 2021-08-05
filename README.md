@@ -90,36 +90,7 @@ julia> a2p
   4   5   6
  -1  -1  -1
  -1  -1  -1
-
- julia> a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
-3×3 Matrix{Int64}:
- 1  4  7
- 2  5  8
- 3  6  9
-
-julia> a2 = [4 5;6 7]
-2×2 Matrix{Int64}:
- 4  5
- 6  7
-
-julia> a1f, a2f = paddedviews(-1, a1, a2; dims=(1));
-
-julia> a2f
-3×2 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(2))) with eltype Int64:
-  4   5
-  6   7
- -1  -1
-
-julia> a1f, a2f = paddedviews(-1, a1, a2; dims=(1,2));
-
-julia> a2f
-3×3 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
-  4   5  -1
-  6   7  -1
- -1  -1  -1
-
 ```
-We can use `dims` keyword to specify the direction of padding for the output arrays as shown above.
 
 If you want original arrays in the center of padded results:
 
@@ -147,31 +118,35 @@ julia> a2p
  -1  -1  -1
   4   5   6
  -1  -1  -1
+```
 
-julia> a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
-3×3 Matrix{Int64}:
- 1  4  7
- 2  5  8
- 3  6  9
 
-julia> a2 = reshape([5, 6], 2, 1)
-2×1 Matrix{Int64}:
- 5
- 6
+We can use `dims` keyword to specify the direction of padding for the output arrays as shown above. They can be integers or tuple of integers.
 
-julia> a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1));
+```julia
+julia> a1p, a2p = paddedviews(-1, a1, a2; dims=1);
 
-julia> a2f
-3×1 PaddedView(-1, ::Matrix{Int64}, (1:3, 1:1)) with eltype Int64 with indices 1:3×1:1:
-  5
-  6
- -1
+julia> a1p
+3×1 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(1))) with eltype Int64:
+ 1
+ 2
+ 3
 
-julia> a1f, a2f = sym_paddedviews(-1, a1, a2; dims=(1,2));
-
-julia> a2f
-3×3 PaddedView(-1, ::Matrix{Int64}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
- -1   5  -1
- -1   6  -1
+julia> a2p
+3×3 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+  4   5   6
  -1  -1  -1
+ -1  -1  -1
+
+julia> a1p, a2p = sym_paddedviews(-1, a1, a2; dims=2);
+
+julia> a1p
+3×3 PaddedView(-1, ::Matrix{Int64}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
+ -1  1  -1
+ -1  2  -1
+ -1  3  -1
+
+julia> a2p
+1×3 PaddedView(-1, ::Matrix{Int64}, (1:1, 1:3)) with eltype Int64 with indices 1:1×1:3:
+ 4  5  6
 ```

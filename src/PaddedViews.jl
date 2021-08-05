@@ -177,15 +177,14 @@ Base.@propagate_inbounds function Base.getindex(A::PaddedView{T,N}, i::Vararg{In
 end
 
 """
-    Aspad = paddedviews(fillvalue, A1, A2, ....; dims==1:ndims(first(As)))
+    Aspad = paddedviews(fillvalue, A1, A2, ...; [dims])
 
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes,
 chosen as the span of axes enclosing all of the input arrays.
 
-The padding is applied to one direction. For example, values are filled to bottom-right part
-of the new array in two-dimensional case. Use [`sym_paddedviews`](@ref) if _both_ directions
-need to be padded. We can specify which dimensions to pad using `dims` keyword. Input to `dims`
-follows cat convention which allows input as tuple, UnitRange, and single integer.
+The padding is applied to one direction in dimensions `dims`. For example, values are filled to
+bottom-right part of the new array in two-dimensional case. Use [`sym_paddedviews`](@ref) if
+_both_ directions need to be padded.
 
 The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
 that `Ap[CartesianIndices(A)] == A`.
@@ -223,22 +222,26 @@ julia> a1p[CartesianIndices(a1)]
  1
  2
  3
+```
 
- julia> a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
-3×3 Matrix{Int64}:
+`dims` keyword allows padding only for specified dimensions.
+
+```jldoctest; setup=:(using PaddedViews)
+julia> a1 = reshape(collect(1:9), 3, 3)
+3×3 $(Matrix{Int}):
  1  4  7
  2  5  8
  3  6  9
 
 julia> a2 = [4 5;6 7]
-2×2 Matrix{Int64}:
+2×2 $(Matrix{Int}):
  4  5
  6  7
 
-julia> a1f, a2f = paddedviews(-1, a1, a2; dims=(1));
+julia> a1f, a2f = paddedviews(-1, a1, a2; dims=1);
 
 julia> a2f
-3×2 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(2))) with eltype Int64:
+3×2 PaddedView(-1, ::$(Matrix{Int}), (Base.OneTo(3), Base.OneTo(2))) with eltype $(Int):
   4   5
   6   7
  -1  -1
@@ -246,7 +249,7 @@ julia> a2f
 julia> a1f, a2f = paddedviews(-1, a1, a2; dims=(1,2));
 
 julia> a2f
-3×3 PaddedView(-1, ::Matrix{Int64}, (Base.OneTo(3), Base.OneTo(3))) with eltype Int64:
+3×3 PaddedView(-1, ::$(Matrix{Int}), (Base.OneTo(3), Base.OneTo(3))) with eltype $(Int):
   4   5  -1
   6   7  -1
  -1  -1  -1
@@ -303,15 +306,14 @@ padrange(i1::AbstractRange, i2::AbstractRange) = padrange(convert(UnitRange{Int}
 
 
 """
-    Aspad = sym_paddedviews(fillvalue, A1, A2, ....; dims==1:ndims(first(As)))
+    Aspad = sym_paddedviews(fillvalue, A1, A2, ...; [dims])
 
 Pad the arrays `A1`, `A2`, ..., to a common size or set of axes, chosen as the span of axes
 enclosing all of the input arrays.
 
-The padding is applied to both directions, which means original array located at the center
-the padded result. Use [`paddedviews`](@ref) if only one direction need to be padded.
-We can specify which dimensions to pad using `dims` keyword. Input to `dims`
-follows cat convention which allows input as tuple, UnitRange, and single integer.
+The padding is applied to both directions in dimensions `dims`, which means original array
+located at the center the padded result. Use [`paddedviews`](@ref) if only one direction
+need to be padded.
 
 The axes of original array `A` will be preserved in the padded result `Ap`, hence it's true
 that `Ap[CartesianIndices(A)] == A`.
@@ -348,22 +350,26 @@ julia> a1p[CartesianIndices(a1)]
  1
  2
  3
+```
 
-julia> a1 = reshape([1, 2, 3,4,5,6,7,8,9], 3, 3)
- 3×3 Matrix{Int64}:
+`dims` keyword allows padding only for specified dimensions.
+
+```jldoctest; setup=:(using PaddedViews)
+julia> a1 = reshape(collect(1:9), 3, 3)
+ 3×3 $(Matrix{Int}):
   1  4  7
   2  5  8
   3  6  9
 
 julia> a2 = reshape([5, 6], 2, 1)
- 2×1 Matrix{Int64}:
+ 2×1 $(Matrix{Int}):
   5
   6
 
-julia> a1f, a2f = sym_paddedviews(-1, a1, a2;dims=(1));
+julia> a1f, a2f = sym_paddedviews(-1, a1, a2; dims=1);
 
 julia> a2f
- 3×1 PaddedView(-1, ::Matrix{Int64}, (1:3, 1:1)) with eltype Int64 with indices 1:3×1:1:
+ 3×1 PaddedView(-1, ::$(Matrix{Int}), (1:3, 1:1)) with eltype $(Int) with indices 1:3×1:1:
    5
    6
   -1
@@ -371,7 +377,7 @@ julia> a2f
 julia> a1f, a2f = sym_paddedviews(-1, a1, a2; dims=(1,2));
 
 julia> a2f
- 3×3 PaddedView(-1, ::Matrix{Int64}, (1:3, 0:2)) with eltype Int64 with indices 1:3×0:2:
+ 3×3 PaddedView(-1, ::$(Matrix{Int}), (1:3, 0:2)) with eltype $(Int) with indices 1:3×0:2:
   -1   5  -1
   -1   6  -1
   -1  -1  -1
