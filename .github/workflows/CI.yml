@@ -24,6 +24,9 @@ jobs:
           - os: macOS-latest
             julia-version: '1'
             arch: x64
+          - os: ubuntu-latest
+            julia-version: '1'
+            arch: x86
 
 
     steps:
