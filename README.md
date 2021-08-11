@@ -1,13 +1,8 @@
 # PaddedViews
 
-[![Build Status](https://travis-ci.org/JuliaArrays/PaddedViews.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/PaddedViews.jl)
-
-[![codecov.io](http://codecov.io/github/JuliaArrays/PaddedViews.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaArrays/PaddedViews.jl?branch=master)
-
-[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/P/PaddedViews.svg
-[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
-
-[![PkgEval][pkgeval-img]][pkgeval-url]
+[![][action-img]][action-url]
+[![][pkgeval-img]][pkgeval-url]
+[![][codecov-img]][codecov-url]
 
 ## Summary
 
@@ -150,3 +145,13 @@ julia> a2p
 1×3 PaddedView(-1, ::Matrix{Int64}, (1:1, 1:3)) with eltype Int64 with indices 1:1×1:3:
  4  5  6
 ```
+
+
+<!-- badges and urls -->
+
+[pkgeval-img]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/P/PaddedViews.svg
+[pkgeval-url]: https://juliaci.github.io/NanosoldierReports/pkgeval_badges/report.html
+[action-img]: https://github.com/JuliaArrays/PaddedViews.jl/workflows/CI/badge.svg
+[action-url]: https://github.com/JuliaArrays/PaddedViews.jl/actions
+[codecov-img]: https://codecov.io/github/JuliaArrays/PaddedViews.jl/coverage.svg?branch=master
+[codecov-url]: https://codecov.io/github/JuliaArrays/PaddedViews.jl?branch=master
