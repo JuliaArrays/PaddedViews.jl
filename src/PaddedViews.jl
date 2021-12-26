@@ -255,7 +255,6 @@ julia> a2f
  -1  -1  -1
 ```
 """
-
 function paddedviews(fillvalue,  As::AbstractArray...; dims=1:ndims(first(As)))
     inds = outerinds(As...)
     map(A->PaddedView(fillvalue, A, _extended_axes(A, inds, dims)), As)
@@ -383,7 +382,6 @@ julia> a2f
   -1  -1  -1
  ```
 """
-
 function sym_paddedviews(fillvalue, As::AbstractArray...; dims=1:ndims(first(As)))
     inds = outerinds(As...)
     map(As) do A
