@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ['0.7', '1.0', '1', 'nightly']
+        julia-version: ['1.0', '1.6', '', 'nightly']
         os: [ubuntu-latest]
         arch: [x64]
         include:
