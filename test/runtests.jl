@@ -49,8 +49,8 @@ end
     @test eltype(A) == Int
     @test ndims(A) == 2
     @test size(A) == (5, 7)
-    @test @inferred(axes(A)) === (0:4, -1:5)
-    @test @inferred(axes(A, 3)) === 1:1
+    @test @inferred(axes(A)) === map(Base.IdentityUnitRange, (0:4, -1:5))
+    @test @inferred(axes(A, 3)) == Base.IdentityUnitRange(1:1)
     @test A == OffsetArray([0 0 0 0 0 0 0;
                             0 0 1 4 7 0 0;
                             0 0 2 5 8 0 0;
@@ -111,6 +111,11 @@ end
         pv = @inferred PaddedView(-1, oa, (3, 2), (2, 0))
         @test pv[1:3, 1:2] == [1 3; 2 4; -1 -1]
     end
+
+    # test for offset axes: the axes should be their own axes
+    a = [1,2,3]
+    P = PaddedView(-1, a, (0:3,))
+    @test first(P) == P[first(LinearIndices(P))]
 end
 
 @testset "paddedviews" begin
@@ -149,7 +154,7 @@ end
     @test a3p[CartesianIndices(a3)] == a3
     @test eltype(a1p) == Int
     @test eltype(a3p) == Float64
-    @test axes(a1p) === axes(a3p) === (1:2, 0:1)
+    @test axes(a1p) === axes(a3p) === map(Base.IdentityUnitRange, (1:2, 0:1))
 
     @test @inferred(paddedviews(3)) == ()
     @test_throws ErrorException PaddedViews.outerinds()
@@ -219,7 +224,7 @@ end
     @test a2p[CartesianIndices(a2)] == a2
     @test eltype(a1p) == Int
     @test eltype(a2p) == Float64
-    @test axes(a1p) === axes(a2p) === (1:2, 1:2)
+    @test axes(a1p) === axes(a2p) === map(Base.IdentityUnitRange, (1:2, 1:2))
 
     a1 = reshape([1,2,3], 3, 1)
     a2 = [1.0,2.0,3.0]'
@@ -233,8 +238,8 @@ end
     @test a2p[CartesianIndices(a2)] == a2
     @test eltype(a1p) == Int
     @test eltype(a2p) == Float64
-    @test axes(a1p) === (1:3, 0:2)
-    @test axes(a2p) === (0:2, 1:3)
+    @test axes(a1p) === map(Base.IdentityUnitRange, (1:3, 0:2))
+    @test axes(a2p) === map(Base.IdentityUnitRange, (0:2, 1:3))
 
     a1p, a2p, a3p = @inferred(sym_paddedviews(0, a1, a2, a1))
     @test a1p == a3p == OffsetArray([0 1 0; 0 2 0; 0 3 0], (1:3, 0:2))
