@@ -1,7 +1,12 @@
 module PaddedViews
-using Base: OneTo, tail, IdentityUnitRange
+using Base: OneTo, tail
 using OffsetArrays
 using OffsetArrays: no_offset_view
+@static if !isdefined(Base, :IdentityUnitRange)
+    const IdentityUnitRange = Base.Slice
+else
+    using Base: IdentityUnitRange
+end
 
 export PaddedView, paddedviews, sym_paddedviews
 
@@ -104,17 +109,13 @@ function PaddedView(fillvalue::FT,
     PaddedView{filltype(FT, T)}(fillvalue, data, padded_inds, data_inds)
 end
 
-function _to_axes(rs::Tuple{AbstractUnitRange,Vararg{AbstractUnitRange}})
-    (_to_axis(first(rs)), _to_axes(rs[2:end])...)
-end
-_to_axes(::Tuple{}) = ()
 _to_axis(x::Union{OneTo, IdentityUnitRange}) = x
 _to_axis(r::AbstractUnitRange) = IdentityUnitRange(r)
 
 function PaddedView{FT}(fillvalue,
                         data::AbstractArray{T,N},
                         indices) where {FT,T,N}
-    indsoffset = _to_axes(indices)
+    indsoffset = map(_to_axis, indices)
     PaddedView{FT,N,typeof(indsoffset),typeof(data)}(convert(FT, fillvalue), data, indsoffset)
 end
 
