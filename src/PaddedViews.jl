@@ -1,6 +1,12 @@
 module PaddedViews
 using Base: OneTo, tail
 using OffsetArrays
+using OffsetArrays: no_offset_view
+@static if !isdefined(Base, :IdentityUnitRange)
+    const IdentityUnitRange = Base.Slice
+else
+    using Base: IdentityUnitRange
+end
 
 export PaddedView, paddedviews, sym_paddedviews
 
@@ -103,10 +109,14 @@ function PaddedView(fillvalue::FT,
     PaddedView{filltype(FT, T)}(fillvalue, data, padded_inds, data_inds)
 end
 
+_to_axis(x::Union{OneTo, IdentityUnitRange}) = x
+_to_axis(r::AbstractUnitRange) = IdentityUnitRange(r)
+
 function PaddedView{FT}(fillvalue,
                         data::AbstractArray{T,N},
                         indices) where {FT,T,N}
-    PaddedView{FT,N,typeof(indices),typeof(data)}(convert(FT, fillvalue), data, indices)
+    indsoffset = map(_to_axis, indices)
+    PaddedView{FT,N,typeof(indsoffset),typeof(data)}(convert(FT, fillvalue), data, indsoffset)
 end
 
 function PaddedView{FT}(fillvalue,
@@ -414,9 +424,10 @@ end
 function Base.showarg(io::IO, A::PaddedView, toplevel)
     print(io, "PaddedView(", A.fillvalue, ", ")
     Base.showarg(io, parent(A), false)
-    print(io, ", (", join(A.indices, ", "))
+    print(io, ", (", join(map(no_offset_view, A.indices), ", "))
     print(io, ndims(A) == 1 ? ",))" : "))")
     toplevel && print(io, " with eltype ", eltype(A))
+    return nothing
 end
 
 end # module
