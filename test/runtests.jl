@@ -375,3 +375,31 @@ end
         @test Ap[axes(A)...] == A
     end
 end
+
+@testset "specializations" begin
+    @testset "trivalent logic" begin
+        for (p, v) in Iterators.product(ntuple(_->(true, false, missing), 2)...)
+            a = fill(v, (1, 1))
+            pa = PaddedView(p, a, (1:2, 1:2))
+            mpa = collect(pa)
+            # ensure specializations are equivalent to fallbacks
+            for f in (any, all)
+                @test isequal(f(pa), f(mpa))
+            end
+        end
+    end
+    @testset "with predicates" begin
+        for (p, v) in Iterators.product(ntuple(_->(0, 1), 2)...)
+            a = fill(v, (1, 1))
+            pa = PaddedView(p, a, (1:2, 1:2))
+            mpa = collect(pa)
+            # ensure specializations are equivalent to fallbacks
+            fp = ==(0)
+            for f in (any, all)
+                v1 = f(fp, pa)
+                v2 = f(fp, mpa)
+                @test isequal(v1, v2)
+            end
+        end
+    end
+end
