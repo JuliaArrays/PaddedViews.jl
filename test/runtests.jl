@@ -254,8 +254,8 @@ end
     @test a3p[CartesianIndices(a3)] == a3
     @test eltype(a1p) == Int
     @test eltype(a3p) == Float64
-    @test axes(a1p) == (1:3, 0:2)
-    @test axes(a3p) == (0:2, 0:2)
+    @test axes(a1p) == map(IdentityUnitRange, (1:3, 0:2))
+    @test axes(a3p) == map(IdentityUnitRange, (0:2, 0:2))
 
     @test @inferred(sym_paddedviews(3)) == ()
 
@@ -361,7 +361,7 @@ end
                  (Nothing, nothing))
         A = reshape(1:9, 3, 3)
         Ap = @inferred(PaddedView(v, A, (0:4, 0:4)))
-        @test axes(Ap) == (OffsetArrays.IdOffsetRange(0:4), OffsetArrays.IdOffsetRange(0:4))
+        @test axes(Ap) == map(IdentityUnitRange, (0:4, 0:4))
         @test eltype(Ap) === Union{T, eltype(A)}
         @test Ap[0, 0] === v
         @test Ap[1, 1] === 1
