@@ -430,4 +430,14 @@ function Base.showarg(io::IO, A::PaddedView, toplevel)
     return nothing
 end
 
+# The fallbacks work, but this is more efficient
+# TODO use use short-circuit evaluation,
+Base.any(f::Function, A::PaddedView) = f(A.fillvalue) | any(f, parent(A))
+Base.all(f::Function, A::PaddedView) = f(A.fillvalue) & all(f, parent(A))
+if v"0.7" <= VERSION < v"1.1"
+    # ambiguity patch
+    # https://github.com/JuliaLang/julia/pull/30904
+    Base.all(::typeof(isinteger), ::PaddedView{<:Integer}) = true
+end
+
 end # module
